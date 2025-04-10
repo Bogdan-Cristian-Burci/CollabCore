@@ -1,6 +1,10 @@
-import Image from "next/image";
+ import Image from "next/image";
+import { auth } from "@/auth";
+import Link from "next/link";
 
-export default function Home() {
+export default async function Home() {
+  const session = await auth();
+  const user = session?.user;
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -12,18 +16,34 @@ export default function Home() {
           height={38}
           priority
         />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+        <div className="bg-black/[.05] dark:bg-white/[.06] px-6 py-4 rounded text-center sm:text-left">
+          {user ? (
+            <div className="flex flex-col gap-2">
+              <p className="font-medium">Welcome, {user.name || user.email}!</p>
+              {user.email && <p className="text-sm text-gray-600">Email: {user.email}</p>}
+              <div className="flex justify-center sm:justify-start mt-2">
+                <Link 
+                  href="/api/auth/signout"
+                  className="inline-flex items-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700"
+                >
+                  Sign Out
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <p className="font-medium">You are not signed in</p>
+              <div className="flex justify-center sm:justify-start mt-2">
+                <Link 
+                  href="/login" 
+                  className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
+                >
+                  Sign In
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="flex gap-4 items-center flex-col sm:flex-row">
           <a
