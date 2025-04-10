@@ -10,6 +10,7 @@ import Link from "next/link";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { fetchWithInterceptor } from "@/lib/fetch-interceptor";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -45,17 +46,19 @@ export default function Register() {
     console.log('submitting')
     try {
       // Here you would typically make a request to your API to register the user
-      const response = await fetch("/api/register", {
+      const response = await fetchWithInterceptor("/api/register", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json"
         },
         body: JSON.stringify({
           name: data.name,
           email: data.email,
           password: data.password,
           passwordConfirmation: data.confirmPassword
-        })
+        }),
+        successMessage: "Registration successful",
       });
 
       console.log(response)

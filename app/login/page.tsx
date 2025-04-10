@@ -12,6 +12,7 @@ import Image from 'next/image'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {fetchWithInterceptor} from "@/lib/fetch-interceptor";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
@@ -39,7 +40,7 @@ export default function Login() {
 
     try {
       // Use our own login endpoint instead of NextAuth
-      const response = await fetch("/api/login", {
+      const response = await fetchWithInterceptor("/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -47,7 +48,8 @@ export default function Login() {
         body: JSON.stringify({
           email: data.email,
           password: data.password
-        })
+        }),
+        successMessage: "Login successful",
       });
 
       if (!response.ok) {
@@ -87,7 +89,7 @@ export default function Login() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-8">
           <Image
-              src="/static/logo_transparent.png"
+              src="/static/logo.svg"
               alt="Collab Core"
               width={400}
               height={100}
