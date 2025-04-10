@@ -42,9 +42,10 @@ export default function Register() {
     setIsLoading(true);
     setError("");
 
+    console.log('submitting')
     try {
       // Here you would typically make a request to your API to register the user
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -52,9 +53,12 @@ export default function Register() {
         body: JSON.stringify({
           name: data.name,
           email: data.email,
-          password: data.password
+          password: data.password,
+          passwordConfirmation: data.confirmPassword
         })
       });
+
+      console.log(response)
 
       if (!response.ok) {
         const errorData = await response.json();

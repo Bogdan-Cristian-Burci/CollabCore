@@ -7,6 +7,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import Image from 'next/image'
 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -37,6 +38,26 @@ export default function Login() {
     setError("");
 
     try {
+      // Use our own login endpoint instead of NextAuth
+      const response = await fetch("/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: data.email,
+          password: data.password
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setError(errorData.message || "Invalid email or password");
+        setIsLoading(false);
+        return;
+      }
+
+      // If successful, now sign in with NextAuth to set up the session
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
@@ -44,13 +65,14 @@ export default function Login() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Session creation failed");
         setIsLoading(false);
         return;
       }
 
-      router.push("/");
+      router.push("/dashboard");
     } catch (err) {
+      console.error("Login error:", err);
       setError("Something went wrong. Please try again.");
       setIsLoading(false);
     }
@@ -62,7 +84,22 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+        <div className="w-full max-w-md space-y-8">
+          <Image
+              src="/static/logo_transparent.png"
+              alt="Collab Core"
+              width={400}
+              height={100}
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+                margin: "0 auto",
+                display: "block"
+              }}
+              priority
+          />
+        </div>
       <div className="w-full max-w-md space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -93,7 +130,6 @@ export default function Login() {
                       type="email"
                       className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                       placeholder="Email address"
-                      suppressHydrationWarning
                     />
                   </FormControl>
                   <FormMessage />
@@ -113,7 +149,6 @@ export default function Login() {
                       type="password"
                       className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
                       placeholder="Password"
-                      suppressHydrationWarning
                     />
                   </FormControl>
                   <FormMessage />
@@ -129,7 +164,7 @@ export default function Login() {
               {isLoading ? "Signing in..." : "Login now"}
             </Button>
             
-            <p className="mt-2 text-center text-sm text-gray-600">
+            <div className="mt-2 text-center text-sm text-gray-600">
               Don't have an account?{" "}
               <Link
                 href="/register"
@@ -137,7 +172,7 @@ export default function Login() {
               >
                 Create one
               </Link>
-            </p>
+            </div>
           </form>
         </Form>
 
