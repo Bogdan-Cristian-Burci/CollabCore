@@ -10,6 +10,7 @@ import {
     SidebarGroupLabel,
     SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem
 } from "@/components/ui/sidebar";
+import Link from "next/link";
 
 
 interface DashboardItem{
@@ -99,10 +100,10 @@ export default function DashboardSidebar() {
                                     {category.items.map((item) => (
                                         <SidebarMenuItem key={item.title}>
                                             <SidebarMenuButton asChild>
-                                                <a href={item.link}>
+                                                <Link href={item.link}>
                                                     <item.icon className="mr-2 h-4 w-4"/>
                                                     <span>{item.title}</span>
-                                                </a>
+                                                </Link>
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
                                     ))}
