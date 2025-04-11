@@ -11,6 +11,9 @@ import {
     SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem
 } from "@/components/ui/sidebar";
 import Link from "next/link";
+import {DropdownMenu} from "@/components/ui/dropdown-menu";
+import OrganisationSwitcher from "@/components/dashboard/OrganisationSwitcher";
+import { useSession } from "next-auth/react";
 
 
 interface DashboardItem{
@@ -87,9 +90,15 @@ const menuItems : DashboardCategory[] = [
     }
 ];
 export default function DashboardSidebar() {
+
+    const {data,status } = useSession();
+
+    console.log('auth data is ',data);
   return (
-      <Sidebar>
-          <SidebarHeader/>
+      <Sidebar collapsible="icon">
+          <SidebarHeader>
+            {/*<OrganisationSwitcher />*/}
+          </SidebarHeader>
           <SidebarContent>
               {
                     menuItems.map((category) => (

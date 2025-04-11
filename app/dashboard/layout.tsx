@@ -8,7 +8,7 @@ import React from "react";
 export default function DashBoardLayout({children}:{children:React.ReactNode}) {
   return (
       <SidebarProvider>
-          <div className="flex h-screen">
+          <div className="flex h-screen w-full">
           <DashboardSidebar/>
               <main className="flex-1 overflow-y-auto p-4">
                   <div className="flex items-center justify-between mb-4">

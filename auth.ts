@@ -55,12 +55,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         async jwt({ token, user }) {
             if (user) {
                 token.accessToken = user.accessToken;
+                // Make sure we have user data
+                token.user = user;
             }
             return token;
         },
         async session({ session, token }) {
             if (session.user) {
-                session.user.accessToken = token.accessToken;
+                session.user.accessToken = token.accessToken as string;
+                // Ensure the session has all necessary user data
+                session.user.name = session.user.name || token.name as string;
+                session.user.email = session.user.email || token.email as string;
             }
             return session;
         },

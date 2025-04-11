@@ -151,7 +151,7 @@ function SidebarProvider({
   )
 }
 
-function DashboardSidebar({
+function Sidebar({
   side = "left",
   variant = "sidebar",
   collapsible = "offcanvas",
@@ -196,7 +196,7 @@ function DashboardSidebar({
           side={side}
         >
           <SheetHeader className="sr-only">
-            <SheetTitle>DashboardSidebar</SheetTitle>
+            <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
           <div className="flex h-full w-full flex-col">{children}</div>

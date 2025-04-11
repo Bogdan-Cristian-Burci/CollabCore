@@ -12,12 +12,25 @@ export default function Dashboard() {
     if (status === "unauthenticated") {
       router.push("/login");
     }
-  }, [status, router]);
+    
+    // Add console logs to help debug authentication status
+    console.log("Auth status:", status);
+    console.log("Session data:", session);
+  }, [status, router, session]);
 
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-lg">Loading...</p>
+        <p className="text-lg">Loading authentication data...</p>
+      </div>
+    );
+  }
+  
+  // Safety check - if no session but we're not in loading state
+  if (!session && status !== "loading") {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p className="text-lg">Please log in to view the dashboard</p>
       </div>
     );
   }
