@@ -1,6 +1,8 @@
-import NextAuth from "next-auth"
+import NextAuth, { User } from "next-auth"
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+import {LoginResponseResource, UserResource} from "@/types/user";
+import {JWT} from "next-auth/jwt";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
     providers: [
@@ -42,8 +44,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                         return null;
                     }
 
-                    const user = await response.json();
+                    const data : LoginResponseResource = await response.json();
+
+                    const user: User = {
+                        id: String(data.user.id),
+                        name: data.user.name,
+                        email: data.user.email,
+                        accessToken: String(data.token)
+                    }
                     return user;
+
                 } catch (error) {
                     console.error("Authentication error:", error);
                     return null;
@@ -52,7 +62,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }),
     ],
     callbacks: {
-        async jwt({ token, user }) {
+        async jwt({ token, user }: { token: JWT; user?: User | undefined }) {
             if (user) {
                 token.accessToken = user.accessToken;
                 // Make sure we have user data
@@ -62,10 +72,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         },
         async session({ session, token }) {
             if (session.user) {
-                session.user.accessToken = token.accessToken as string;
+                session.user.accessToken = String(token.accessToken) as string;
                 // Ensure the session has all necessary user data
-                session.user.name = session.user.name || token.name as string;
-                session.user.email = session.user.email || token.email as string;
+                session.user.name = session.user.name || token.user.name as string;
+                session.user.email = session.user.email || token.user.email as string;
+                session.user.id = session.user.id || token.user.id as string;
             }
             return session;
         },
