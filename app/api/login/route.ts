@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {fetchWithInterceptor} from "@/lib/fetch-interceptor";
 
 // Define the validation schema for login
 const loginSchema = z.object({
@@ -11,7 +12,6 @@ export async function POST(request: Request) {
   try {
     // Parse the request body
     const body = await request.json();
-    
     
     // Validate the request data
     const result = loginSchema.safeParse(body);
@@ -25,19 +25,21 @@ export async function POST(request: Request) {
     }
 
     const { email, password } = result.data;
-
-    // Use the correct URL for Laravel backend
-    const apiUrl = "http://localhost/api/login";
     
-    let userData = null;
+    // Use the external API URL directly to avoid recursion
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
+    const apiUrl = `${API_URL}/api/login`;
+    
+    console.log("API Route: Sending login request to:", apiUrl);
     
     try {
+      // Use direct fetch to avoid any complexity
       const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",
-          "X-Requested-With": "XMLHttpRequest" // Laravel often requires this
+          "X-Requested-With": "XMLHttpRequest"
         },
         body: JSON.stringify({
           email,
@@ -45,9 +47,14 @@ export async function POST(request: Request) {
         })
       });
       
+      console.log("Login request status:", response.status);
+      
       if (response.ok) {
-        userData = await response.json();
+        const userData = await response.json();
+        console.log("Login successful");
+        return NextResponse.json(userData, { status: 200 });
       } else {
+        console.error("Login failed with status:", response.status);
         return NextResponse.json(
           { message: "Invalid email or password" },
           { status: 401 }
@@ -60,8 +67,6 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-    
-    return NextResponse.json(userData, { status: 200 });
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

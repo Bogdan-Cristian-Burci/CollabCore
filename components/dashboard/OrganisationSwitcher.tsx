@@ -3,16 +3,34 @@
 import {SidebarMenu, SidebarMenuButton, SidebarMenuItem} from "@/components/ui/sidebar";
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
 import {Building, Check, ChevronsUpDown} from "lucide-react";
-import {OrganisationResource} from "@/types/user";
-import React from "react";
+import {Skeleton} from "@/components/ui/skeleton";
 
-export default function OrganisationSwitcher({organisations,defaultOrganisation}:{organisations: OrganisationResource[], defaultOrganisation: OrganisationResource}) {
+import React, {useEffect, useState} from "react";
+import {useOrganizationStore} from "@/app/store/organisationStore";
 
-    const [selectedOrganisation, setSelectedOrganisation] = React.useState<OrganisationResource>(defaultOrganisation);
+export default function OrganisationSwitcher() {
+
+    const {
+    organizations,
+    currentOrganization,
+    fetchUserOrganizations,
+    setCurrentOrganization,
+    isLoading
+    }= useOrganizationStore()
+
+    const [isOpen, setIsOpen] = useState(false);
+    useEffect(() => {
+        fetchUserOrganizations();
+    }, [fetchUserOrganizations]);
+
+    const handleOrganizationSelect = async (orgId: string) => {
+        await setCurrentOrganization(orgId);
+        setIsOpen(false);
+    };
     return (
     <SidebarMenu>
         <SidebarMenuItem>
-            <DropdownMenu>
+            <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
                 <DropdownMenuTrigger asChild>
                     <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                         <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
@@ -20,7 +38,11 @@ export default function OrganisationSwitcher({organisations,defaultOrganisation}
                         </div>
                         <div className="flex flex-col gap-0.5 leading-none">
                             <span className="font-semibold">Organisation</span>
-                            <span className="">{selectedOrganisation.name}</span>
+                            {isLoading ? (
+                                <Skeleton className="h-4 w-20" />
+                            ) : (
+                                <span className="">{currentOrganization?.name || "?"}</span>
+                            )}
                         </div>
                         <ChevronsUpDown className="ml-auto" />
                     </SidebarMenuButton>
@@ -29,14 +51,19 @@ export default function OrganisationSwitcher({organisations,defaultOrganisation}
                     className="w-[--radix-dropdown-menu-trigger-width]"
                     align="start"
                 >
-                    {
-                        organisations.map((organisation)=>(
-                            <DropdownMenuItem key={organisation.id} onSelect={()=>setSelectedOrganisation(organisation)}>
+                    {isLoading ? (
+                        <div className="p-2">
+                            <Skeleton className="h-6 w-full mb-2" />
+                            <Skeleton className="h-6 w-full" />
+                        </div>
+                    ) : (
+                        organizations.map((organisation)=>(
+                            <DropdownMenuItem key={organisation.id} onSelect={()=>handleOrganizationSelect(String(organisation.id))}>
                                 {organisation.name}{"  "}
-                                { organisation.id === selectedOrganisation.id && <Check className="ml-auto"/> }
+                                { organisation.id === currentOrganization?.id && <Check className="ml-auto"/> }
                             </DropdownMenuItem>
                         ))
-                    }
+                    )}
                 </DropdownMenuContent>
             </DropdownMenu>
         </SidebarMenuItem>

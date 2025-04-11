@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import {fetchWithInterceptor} from "@/lib/fetch-interceptor";
 
 // Define the validation schema for registration
 const registerSchema = z.object({
@@ -36,8 +37,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Forward the request to the backend API
-    const apiUrl = "http://localhost/api/register";
+    // Use the external API URL directly to avoid recursion
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
+    const apiUrl = `${API_URL}/api/register`;
+    
+    console.log("API Route: Sending registration request to:", apiUrl);
     
     const response = await fetch(apiUrl, {
       method: "POST",
@@ -46,7 +50,6 @@ export async function POST(request: Request) {
         "Accept": "application/json",
         "Origin": "http://localhost:3000"
       },
-      credentials: "include",
       body: JSON.stringify({
         name,
         email,

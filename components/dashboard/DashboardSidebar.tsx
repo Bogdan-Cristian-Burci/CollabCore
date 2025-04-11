@@ -97,7 +97,7 @@ export default function DashboardSidebar() {
   return (
       <Sidebar collapsible="icon">
           <SidebarHeader>
-            {/*<OrganisationSwitcher />*/}
+            <OrganisationSwitcher />
           </SidebarHeader>
           <SidebarContent>
               {

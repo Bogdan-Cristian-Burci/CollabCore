@@ -1,4 +1,5 @@
 import {JWT} from "next-auth/jwt";
+import { OrganisationResource } from "@/types/organisation";
 
 export interface UserRoleInOrganisation{
     id:number | null,
@@ -31,23 +32,7 @@ export interface LinksStructure{
     projects:string,
     members:string,
 }
-export interface OrganisationResource{
-    id:number,
-    name:string,
-    slug:string,
-    unique_id:string,
-    description:string,
-    logo:string,
-    address:string,
-    website:string,
-    created_by:number,
-    owner_id:number,
-    created_at:string,
-    updated_at:string,
-    user_role:UserRoleInOrganisation,
-    can:UserPermissionsInOrganisation,
-    links:LinksStructure
-}
+
 
 export interface UserResource{
     id:number,
