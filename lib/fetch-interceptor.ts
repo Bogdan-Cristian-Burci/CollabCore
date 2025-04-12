@@ -1,5 +1,6 @@
 import { toast } from "sonner";
 import { getSession, signOut } from "next-auth/react";
+import { extractLaravelErrorMessage } from "@/lib/server/auth-helpers";
 
 type FetchOptions = RequestInit & {
     showSuccessToast?: boolean;
@@ -7,6 +8,7 @@ type FetchOptions = RequestInit & {
     successMessage?: string;
     skipTokenCheck?: boolean; // Option to skip token check (for refresh token requests)
 };
+
 
 export async function fetchWithInterceptor(
     url: string,
@@ -20,14 +22,15 @@ export async function fetchWithInterceptor(
         ...fetchOptions
     } = options;
 
+    const isServerSide = typeof window === 'undefined';
+    const isClientSide = !isServerSide;
     try {
         // Determine if this is being called from a Next.js API route itself
-        const isServerSide = typeof window === 'undefined';
-        const isClientSide = !isServerSide;
-        
+
+
         // Special handling for server-side login/register API calls
         let apiUrl;
-        
+
         if (isServerSide) {
             // On server side, always use external API URL to avoid recursion
             const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
@@ -36,7 +39,7 @@ export async function fetchWithInterceptor(
         } else {
             // On client side, determine if this is a Next.js API route or external
             const isNextApiRoute = url.startsWith('/api/login') || url.startsWith('/api/register');
-            
+
             if (isNextApiRoute) {
                 // Use the Next.js API route directly from client
                 apiUrl = url;
@@ -48,11 +51,11 @@ export async function fetchWithInterceptor(
                 console.log("[Client] Using external API:", apiUrl);
             }
         }
-        
+
         // Set up headers with CSRF protection
         const headers = new Headers(fetchOptions.headers || {});
         headers.set("Content-Type", "application/json");
-        
+
         // Add CSRF token from meta tag if available (additional CSRF protection)
         if (isClientSide) {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -60,7 +63,7 @@ export async function fetchWithInterceptor(
                 headers.set("X-CSRF-Token", csrfToken);
             }
         }
-        
+
         // Add authentication token if not skipping token check
         if (!skipTokenCheck) {
             try {
@@ -70,14 +73,14 @@ export async function fetchWithInterceptor(
                     const accessToken = session?.user?.accessToken;
                     const tokenExpires = session?.user?.tokenExpires;
                     const sessionError = session?.user?.error;
-                    
+
                     // Check for token errors or expiration
                     if (sessionError === "RefreshTokenError") {
                         // Force sign out if refresh token failed
                         await signOut({ redirect: true, callbackUrl: "/login?error=session" });
                         throw new Error("Session expired. Please sign in again.");
                     }
-                    
+
                     // Check if token is valid
                     if (accessToken) {
                         headers.set("Authorization", `Bearer ${accessToken}`);
@@ -115,13 +118,13 @@ export async function fetchWithInterceptor(
             // Force a new auth check and potentially trigger token refresh
             try {
                 const newSession = await getSession();
-                
+
                 // If we still have a session but got 401, force refresh
                 if (newSession?.user?.accessToken) {
                     // Clear session and redirect to login
                     await signOut({ redirect: true, callbackUrl: "/login?error=unauthorized" });
                 }
-                
+
                 if (showErrorToast && isClientSide) {
                     toast.error("Your session has expired. Please sign in again.");
                 }
@@ -142,7 +145,9 @@ export async function fetchWithInterceptor(
         // Handle other error responses
         else {
             if (showErrorToast && isClientSide) {
-                const errorMessage = responseData?.message || response.statusText || "Something went wrong";
+                // Extract error message from Laravel-style responses
+                const errorMessage = responseData ? extractLaravelErrorMessage(responseData) :
+                    response.statusText || "Something went wrong";
                 toast.error(errorMessage);
             }
             return response;
@@ -155,3 +160,48 @@ export async function fetchWithInterceptor(
         throw error;
     }
 }
+
+// Helper methods to make the API easier to use
+export const api = {
+    get: (url: string, options: FetchOptions = {}) =>
+        fetchWithInterceptor(url, { ...options, method: "GET" }),
+
+    post: (url: string, data?: any, options: FetchOptions = {}) =>
+        fetchWithInterceptor(url, {
+            ...options,
+            method: "POST",
+            body: data ? JSON.stringify(data) : undefined
+        }),
+
+    put: (url: string, data?: any, options: FetchOptions = {}) =>
+        fetchWithInterceptor(url, {
+            ...options,
+            method: "PUT",
+            body: data ? JSON.stringify(data) : undefined
+        }),
+
+    patch: (url: string, data?: any, options: FetchOptions = {}) =>
+        fetchWithInterceptor(url, {
+            ...options,
+            method: "PATCH",
+            body: data ? JSON.stringify(data) : undefined
+        }),
+
+    delete: (url: string, options: FetchOptions = {}) =>
+        fetchWithInterceptor(url, { ...options, method: "DELETE" }),
+
+    // Helper to automatically parse JSON from the response
+    async getJSON<T>(url: string, options: FetchOptions = {}): Promise<T> {
+        const response = await fetchWithInterceptor(url, {
+            ...options,
+            method: "GET",
+            showSuccessToast: false
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        return response.json();
+    },
+};

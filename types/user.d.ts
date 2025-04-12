@@ -54,5 +54,7 @@ export interface UserResource{
 export interface LoginResponseResource{
     message:string,
     token:JWT,
+    refreshToken:string,
+    expiresIn:number,
     user:UserResource,
 }

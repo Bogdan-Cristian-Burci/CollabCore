@@ -37,7 +37,7 @@ export default async function RootLayout({
     <head>
       <link
           rel="icon"
-          href="/favicon.svg"
+          href="/icon1.png"
           type="image/svg+xml"
       />
       <title>Collab Core</title>
