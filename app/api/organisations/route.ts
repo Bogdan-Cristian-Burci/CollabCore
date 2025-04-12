@@ -1,11 +1,13 @@
 import { proxyRequest } from "@/lib/server/api-helpers";
+import { getApiBaseUrl } from "@/lib/server/auth-helpers";
 
 // GET - List organisations
 export async function GET() {
   return proxyRequest(
-      null as unknown as Request, // Type hack since GET doesn't need the request
+      new Request(`${getApiBaseUrl()}/dummy`, { method: "GET" }), // Use consistent API base URL
       "/api/organisations",
       {
+        method: "GET",
         customErrorMessage: "Failed to fetch organizations"
       }
   );

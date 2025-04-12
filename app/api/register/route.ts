@@ -20,7 +20,6 @@ export async function POST(request: Request) {
     const result = registerSchema.safeParse(body);
     if (!result.success) {
       // Return validation errors
-      console.log("Validation failed:", result.error.format());
       return NextResponse.json(
         { message: "Validation failed", errors: result.error.format() },
         { status: 400 }
@@ -41,7 +40,6 @@ export async function POST(request: Request) {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
     const apiUrl = `${API_URL}/api/register`;
     
-    console.log("API Route: Sending registration request to:", apiUrl);
     
     const response = await fetch(apiUrl, {
       method: "POST",

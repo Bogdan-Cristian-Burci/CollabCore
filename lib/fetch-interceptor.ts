@@ -35,7 +35,6 @@ export async function fetchWithInterceptor(
             // On server side, always use external API URL to avoid recursion
             const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
             apiUrl = `${API_URL}${url}`;
-            console.log("[Server] Using API URL:", apiUrl);
         } else {
             // On client side, determine if this is a Next.js API route or external
             const isNextApiRoute = url.startsWith('/api/login') || url.startsWith('/api/register');
@@ -43,12 +42,10 @@ export async function fetchWithInterceptor(
             if (isNextApiRoute) {
                 // Use the Next.js API route directly from client
                 apiUrl = url;
-                console.log("[Client] Using Next.js API route:", apiUrl);
             } else {
                 // Use external API for other endpoints
                 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
                 apiUrl = `${API_URL}${url}`;
-                console.log("[Client] Using external API:", apiUrl);
             }
         }
 

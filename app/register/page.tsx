@@ -43,7 +43,6 @@ export default function Register() {
     setIsLoading(true);
     setError("");
 
-    console.log('submitting')
     try {
       // Here you would typically make a request to your API to register the user
       const response = await fetchWithInterceptor("/api/register", {
@@ -61,7 +60,6 @@ export default function Register() {
         successMessage: "Registration successful",
       });
 
-      console.log(response)
 
       if (!response.ok) {
         const errorData = await response.json();

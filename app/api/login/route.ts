@@ -17,7 +17,6 @@ export async function POST(request: Request) {
     const result = loginSchema.safeParse(body);
     if (!result.success) {
       // Return validation errors
-      console.log("Validation failed:", result.error.format());
       return NextResponse.json(
         { message: "Validation failed", errors: result.error.format() },
         { status: 400 }
@@ -30,7 +29,6 @@ export async function POST(request: Request) {
     const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
     const apiUrl = `${API_URL}/api/login`;
     
-    console.log("API Route: Sending login request to:", apiUrl);
     
     try {
       // Use direct fetch to avoid any complexity
@@ -47,14 +45,10 @@ export async function POST(request: Request) {
         })
       });
       
-      console.log("Login request status:", response.status);
-      
       if (response.ok) {
         const userData = await response.json();
-        console.log("Login successful");
         return NextResponse.json(userData, { status: 200 });
       } else {
-        console.error("Login failed with status:", response.status);
         return NextResponse.json(
           { message: "Invalid email or password" },
           { status: 401 }

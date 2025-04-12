@@ -14,6 +14,7 @@ import Link from "next/link";
 import {DropdownMenu} from "@/components/ui/dropdown-menu";
 import OrganisationSwitcher from "@/components/dashboard/OrganisationSwitcher";
 import { useSession } from "next-auth/react";
+import { UserSidebar } from "./UserSidebar";
 
 
 interface DashboardItem{
@@ -93,7 +94,6 @@ export default function DashboardSidebar() {
 
     const {data,status } = useSession();
 
-    console.log('auth data is ',data);
   return (
       <Sidebar collapsible="icon">
           <SidebarHeader>
@@ -123,7 +123,9 @@ export default function DashboardSidebar() {
               }
               <SidebarGroup/>
           </SidebarContent>
-          <SidebarFooter/>
+          <SidebarFooter>
+              <UserSidebar/>
+          </SidebarFooter>
       </Sidebar>
   )
 }

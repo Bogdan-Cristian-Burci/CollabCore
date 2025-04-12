@@ -42,7 +42,6 @@ export async function makeServerApiRequest(
         const API_URL = getApiBaseUrl();
         const apiUrl = `${API_URL}${endpoint}`;
 
-        console.log(`API Route: ${method} request to:`, apiUrl);
 
         // Build request options
         const fetchOptions: RequestInit = {
