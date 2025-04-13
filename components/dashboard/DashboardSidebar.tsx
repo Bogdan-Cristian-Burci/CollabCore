@@ -15,6 +15,7 @@ import {DropdownMenu} from "@/components/ui/dropdown-menu";
 import OrganisationSwitcher from "@/components/dashboard/OrganisationSwitcher";
 import { useSession } from "next-auth/react";
 import { UserSidebar } from "./UserSidebar";
+import SettingsSidebar from "@/components/dashboard/SettingsSidebar";
 
 
 interface DashboardItem{
@@ -78,11 +79,6 @@ const menuItems : DashboardCategory[] = [
         name: "Other",
         items: [
             {
-                title: "Settings",
-                icon: Settings,
-                link: "/dashboard/settings",
-            },
-            {
                 title: "Support",
                 icon: Headset,
                 link: "/dashboard/support",
@@ -121,7 +117,7 @@ export default function DashboardSidebar() {
                         </SidebarGroup>
                     ))
               }
-              <SidebarGroup/>
+              <SettingsSidebar/>
           </SidebarContent>
           <SidebarFooter>
               <UserSidebar/>
