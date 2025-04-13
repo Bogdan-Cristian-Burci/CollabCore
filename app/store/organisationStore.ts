@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { fetchOrganizations } from '@/lib/api/organisations';
+import { switchOrganisation } from '@/lib/api/users';
 import { OrganisationResource } from "@/types/organisation";
 
 interface MinimalOrganisation {
@@ -57,12 +58,27 @@ export const useOrganizationStore = create<OrganizationState>()(
       },
 
       setCurrentOrganization: async (orgId) => {
-        set({ currentOrganizationId: Number(orgId) });
+          console.log('Setting current organization:', orgId);
         
-        // Emit an event for other parts of the app to respond
-        window.dispatchEvent(new CustomEvent('organizationChanged', {
-          detail: { organizationId: orgId }
-        }));
+        try {
+          // Make API request to switch organization using the API utility function
+          const success = await switchOrganisation(orgId);
+          
+          if (!success) {
+            console.error('Failed to switch organization on server');
+            return;
+          }
+          
+          // Only update local state if server request was successful
+          set({ currentOrganizationId: Number(orgId) });
+          
+          // Emit an event for other parts of the app to respond
+          window.dispatchEvent(new CustomEvent('organizationChanged', {
+            detail: { organizationId: orgId }
+          }));
+        } catch (error) {
+          console.error('Error switching organization:', error);
+        }
       },
       
       getCurrentOrganization: () => {

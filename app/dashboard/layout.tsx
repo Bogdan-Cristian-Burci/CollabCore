@@ -6,6 +6,7 @@ import BreadCrumbComponent from "@/components/dashboard/BreadCrumbComponent";
 import React, { useEffect } from "react";
 import { useUserStore } from "@/app/store/userStore";
 import { useOrganizationStore } from "@/app/store/organisationStore";
+import { ToasterProvider } from "@/components/toaster-provider";
 
 export default function DashBoardLayout({children}:{children:React.ReactNode}) {
   const { fetchUserProfile } = useUserStore();
@@ -27,6 +28,7 @@ export default function DashBoardLayout({children}:{children:React.ReactNode}) {
 
   return (
       <SidebarProvider>
+          <ToasterProvider />
           <div className="flex h-screen w-full">
               <DashboardSidebar/>
               <main className="flex-1 overflow-y-auto p-4">
