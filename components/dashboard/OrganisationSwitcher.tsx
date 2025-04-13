@@ -1,35 +1,28 @@
 "use client";
 
-import {SidebarMenu, SidebarMenuButton, SidebarMenuItem} from "@/components/ui/sidebar";
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from "@/components/ui/dropdown-menu";
-import {Building, Check, ChevronsUpDown} from "lucide-react";
-import {Skeleton} from "@/components/ui/skeleton";
-
-import React, {useEffect, useState} from "react";
-import {useOrganizationStore} from "@/app/store/organisationStore";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Building, Check, ChevronsUpDown } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import React, { useState, useEffect } from "react";
+import { useOrganizations } from "@/lib/hooks/useOrganizations";
+import { useOrganizationStore } from "@/app/store/organisationStore";
 
 export default function OrganisationSwitcher() {
-    const {
-        organizations,
-        currentOrganization,
-        fetchUserOrganizations,
-        setCurrentOrganization,
-        isLoading
-    } = useOrganizationStore();
-
+    const { organizations, isLoading, setActiveOrganization } = useOrganizations();
+    const { currentOrganizationId } = useOrganizationStore();
     const [isOpen, setIsOpen] = useState(false);
-
-    useEffect(() => {
-        fetchUserOrganizations();
-    }, [fetchUserOrganizations]);
-
-    const handleOrganizationSelect = async (orgId: string) => {
-        await setCurrentOrganization(orgId);
-        setIsOpen(false);
-    };
-
+    
+    // Find current organization from the query data
+    const currentOrganization = organizations.find(org => org.id === currentOrganizationId) || organizations[0] || null;
+    
     // Determine if we should show dropdown UI elements
     const hasMultipleOrganizations = organizations.length > 1;
+
+    const handleOrganizationSelect = async (orgId: string) => {
+        await setActiveOrganization(orgId);
+        setIsOpen(false);
+    };
 
     return (
         <SidebarMenu>

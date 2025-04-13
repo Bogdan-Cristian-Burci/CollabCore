@@ -91,8 +91,8 @@ export default function Login() {
           <Image
               src="/static/logo.svg"
               alt="Collab Core"
-              width={400}
-              height={100}
+              width={50}
+              height={50}
               style={{
                 maxWidth: "100%",
                 height: "auto",
