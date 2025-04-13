@@ -1,59 +1,81 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { fetchOrganizations } from '@/lib/api/organisations';
-import {OrganisationResource} from "@/types/organisation";
+import { OrganisationResource } from "@/types/organisation";
+
+interface MinimalOrganisation {
+  id: number;
+  name: string;
+  unique_id: string;
+  is_active: boolean;
+}
 
 interface OrganizationState {
-    organizations: OrganisationResource[];
-    currentOrganization: OrganisationResource | null;
-    isLoading: boolean;
-    error: string | null;
+  organizations: MinimalOrganisation[];
+  currentOrganizationId: number | null;
+  isLoading: boolean;
+  error: string | null;
 
-    // Actions
-    fetchUserOrganizations: () => Promise<void>;
-    setCurrentOrganization: (orgId: string) => Promise<void>;
+  // Actions
+  fetchUserOrganizations: () => Promise<void>;
+  setCurrentOrganization: (orgId: string) => Promise<void>;
+  getCurrentOrganization: () => MinimalOrganisation | null;
 }
 
 export const useOrganizationStore = create<OrganizationState>()(
-    persist(
-        (set, get) => ({
-            organizations: [],
-            currentOrganization: null,
-            isLoading: false,
-            error: null,
+  persist(
+    (set, get) => ({
+      organizations: [],
+      currentOrganizationId: null,
+      isLoading: false,
+      error: null,
 
-            fetchUserOrganizations: async () => {
-                set({ isLoading: true, error: null });
-                try {
-                    const organisations = await fetchOrganizations();
-                    set({
-                        organizations: organisations,
-                        // Auto-select first org if none is selected
-                        currentOrganization: get().currentOrganization || organisations.find(org => org.is_active) || null,
-                        isLoading: false
-                    });
-                } catch (error) {
-                    set({ error: 'Failed to fetch organizations', isLoading: false });
-                }
-            },
-
-            setCurrentOrganization: async (orgId) => {
-                const organization = get().organizations.find(org => org.is_active);
-                if (!organization) return;
-
-                set({ currentOrganization: organization });
-                // We'll emit an event for other stores to listen to
-                window.dispatchEvent(new CustomEvent('organizationChanged', {
-                    detail: { organizationId: orgId }
-                }));
-            }
-        }),
-        {
-            name: 'org-storage',
-            // Only persist the currentOrganization ID, not the full object
-            partialize: (state) => ({
-                currentOrganization: state.currentOrganization
-            }),
+      fetchUserOrganizations: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const organisations = await fetchOrganizations();
+          
+          // Store only the minimal required data
+          const minimalOrgs = organisations.map(org => ({
+            id: org.id,
+            name: org.name,
+            unique_id: org.unique_id,
+            is_active: org.is_active
+          }));
+          
+          // Find active organization
+          const activeOrg = organisations.find(org => org.is_active);
+          
+          set({
+            organizations: minimalOrgs,
+            currentOrganizationId: activeOrg?.id || null,
+            isLoading: false
+          });
+        } catch (error) {
+          set({ error: 'Failed to fetch organizations', isLoading: false });
         }
-    )
+      },
+
+      setCurrentOrganization: async (orgId) => {
+        set({ currentOrganizationId: Number(orgId) });
+        
+        // Emit an event for other parts of the app to respond
+        window.dispatchEvent(new CustomEvent('organizationChanged', {
+          detail: { organizationId: orgId }
+        }));
+      },
+      
+      getCurrentOrganization: () => {
+        const { organizations, currentOrganizationId } = get();
+        return organizations.find(org => org.id === currentOrganizationId) || null;
+      }
+    }),
+    {
+      name: 'org-storage',
+      partialize: (state) => ({
+        currentOrganizationId: state.currentOrganizationId,
+        organizations: state.organizations
+      }),
+    }
+  )
 );
