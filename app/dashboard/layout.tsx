@@ -29,7 +29,7 @@ export default function DashBoardLayout({children}:{children:React.ReactNode}) {
   return (
       <SidebarProvider>
           <ToasterProvider />
-          <div className="flex h-screen w-full">
+          <div className="flex h-screen w-full bg-white">
               <DashboardSidebar/>
               <main className="flex-1 overflow-y-auto p-4">
                   <div className="flex items-center justify-start  mb-4">
