@@ -1,13 +1,22 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { fetchOrganizations, fetchOrganisationById } from '@/lib/api/organisations';
-import { useOrganizationStore } from '@/app/store/organisationStore';
+import { useQueryClient } from '@tanstack/react-query';
 import { OrganisationResource } from '@/types/organisation';
+import { useOrganizationStore } from '@/app/store/organisationStore';
+import organisationsApi from '@/lib/api/organisations';
+import { createQueryKeys } from '@/lib/api-factory';
+import { createResourceHooks } from '@/lib/query-hooks';
 
-// Key factory for query keys
-const organizationKeys = {
-  all: ['organizations'] as const,
-  byId: (id: string) => [...organizationKeys.all, 'byId', id] as const,
-};
+// Create standardized query keys for organizations
+export const organizationKeys = createQueryKeys('organizations');
+
+// Create standardized hooks for organizations
+const organizationHooks = createResourceHooks<OrganisationResource>(
+  'organizations',
+  organisationsApi,
+  {
+    all: organizationKeys.all,
+    detail: (id) => organizationKeys.detail(id)
+  }
+);
 
 /**
  * Hook to fetch and manage all organizations data
@@ -15,21 +24,24 @@ const organizationKeys = {
 export function useOrganizations() {
   const queryClient = useQueryClient();
   const { setCurrentOrganization } = useOrganizationStore();
+  
+  // Use the standardized hook
+  const { 
+    data = [], 
+    isLoading, 
+    isFetching, 
+    error, 
+    refetch 
+  } = organizationHooks.useGetAll();
 
-  // Fetch all organizations
-  const query = useQuery({
-    queryKey: organizationKeys.all,
-    queryFn: fetchOrganizations,
-  });
-
-  // Set active organization and update the store
+  // Set active organization and update the store (business logic specific to organizations)
   const setActiveOrganization = async (orgId: string) => {
     // Update store (persists in localStorage)
     await setCurrentOrganization(orgId);
     
     // Refetch if needed to ensure data consistency
-    if (query.data?.length === 0 || !query.data) {
-      query.refetch();
+    if (data.length === 0) {
+      refetch();
     }
 
     // Emit an event for other parts of the app to respond
@@ -38,22 +50,22 @@ export function useOrganizations() {
     }));
   };
 
-  // Find the active organization
+  // Find the active organization (business logic specific to organizations)
   const getActiveOrganization = (): OrganisationResource | null => {
     const store = useOrganizationStore.getState();
     const activeOrgId = store.currentOrganizationId;
     
-    if (!activeOrgId || !query.data) return null;
+    if (!activeOrgId || !data) return null;
     
-    return query.data.find(org => org.id === activeOrgId) || null;
+    return data.find(org => org.id === activeOrgId) || null;
   };
 
   return {
-    organizations: query.data || [],
-    isLoading: query.isLoading,
-    isFetching: query.isFetching,
-    error: query.error,
-    refetch: query.refetch,
+    organizations: data,
+    isLoading,
+    isFetching,
+    error,
+    refetch,
     setActiveOrganization,
     getActiveOrganization,
   };
@@ -63,9 +75,8 @@ export function useOrganizations() {
  * Hook to fetch and manage a single organization by ID
  */
 export function useOrganization(id: string) {
-  return useQuery({
-    queryKey: organizationKeys.byId(id),
-    queryFn: () => fetchOrganisationById(id),
-    enabled: !!id,
-  });
+  return organizationHooks.useGetById(id);
 }
+
+// Export the raw hooks for direct use
+export default organizationHooks;

@@ -2,20 +2,23 @@ import { toast } from "sonner";
 import { getSession, signOut } from "next-auth/react";
 import { extractLaravelErrorMessage } from "@/lib/server/auth-helpers";
 
-type FetchOptions = RequestInit & {
+export type FetchOptions = RequestInit & {
     showSuccessToast?: boolean;
     showErrorToast?: boolean;
     successMessage?: string;
     skipTokenCheck?: boolean; // Option to skip token check (for refresh token requests)
 };
 
-
+/**
+ * Enhanced fetch function with authentication, error handling, and toast notifications
+ * This is the core fetch utility for all API calls in the application
+ */
 export async function fetchWithInterceptor(
     url: string,
     options: FetchOptions = {}
 ): Promise<Response> {
     const {
-        showSuccessToast = true,
+        showSuccessToast = false, // Changed default to false - let React Query or specific calls enable it when needed
         showErrorToast = true,
         successMessage,
         skipTokenCheck = false,
@@ -24,11 +27,9 @@ export async function fetchWithInterceptor(
 
     const isServerSide = typeof window === 'undefined';
     const isClientSide = !isServerSide;
+    
     try {
-        // Determine if this is being called from a Next.js API route itself
-
-
-        // Special handling for server-side login/register API calls
+        // Determine the API URL based on environment
         let apiUrl;
 
         if (isServerSide) {
@@ -36,14 +37,12 @@ export async function fetchWithInterceptor(
             const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
             apiUrl = `${API_URL}${url}`;
         } else {
-            // On client side, determine if this is a Next.js API route or external
-            const isNextApiRoute = url.startsWith('/api/login') || url.startsWith('/api/register');
-
-            if (isNextApiRoute) {
-                // Use the Next.js API route directly from client
+            // On client side, use Next.js API routes as our API layer
+            // This keeps all API calls consistent through our own API routes
+            if (url.startsWith('/api/')) {
                 apiUrl = url;
             } else {
-                // Use external API for other endpoints
+                // For cases where we might need to call external APIs directly
                 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
                 apiUrl = `${API_URL}${url}`;
             }
@@ -68,7 +67,6 @@ export async function fetchWithInterceptor(
                 if (isClientSide) {
                     const session = await getSession();
                     const accessToken = session?.user?.accessToken;
-                    const tokenExpires = session?.user?.tokenExpires;
                     const sessionError = session?.user?.error;
 
                     // Check for token errors or expiration
@@ -158,11 +156,79 @@ export async function fetchWithInterceptor(
     }
 }
 
+/**
+ * Parses a JSON response and extracts data according to our API response format
+ * Handles multiple response formats: { data: [...] }, [...], or { [resourceName]: [...] }
+ */
+export async function parseApiResponse<T>(response: Response): Promise<T> {
+    if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Response is not JSON");
+    }
+
+    const data = await response.json();
+    console.log('Parsing API response:', data);
+
+    // Handle different response formats:
+    // 1. { data: [...] } - Standard Laravel API response
+    if (data?.data) {
+        console.log('Found data in data.data');
+        return data.data as T;
+    }
+    
+    // 2. { roles: [...] } or { users: [...] } - Named resource array
+    // Look for common resource names
+    const commonResourceNames = ['roles', 'users', 'permissions', 'organizations', 'projects', 'teams', 'tasks'];
+    for (const resourceName of commonResourceNames) {
+        if (data?.[resourceName] && Array.isArray(data[resourceName])) {
+            console.log(`Found data in data.${resourceName}`);
+            return data[resourceName] as T;
+        }
+    }
+    
+    // 3. Directly an array
+    if (Array.isArray(data)) {
+        console.log('Response is directly an array');
+        return data as T;
+    }
+    
+    // 4. Any object with an array property (as a last resort)
+    if (data && typeof data === 'object') {
+        // First try to find common plural field names that might contain arrays
+        const resourceArrayKey = Object.keys(data).find(key => 
+            Array.isArray(data[key]) && 
+            key.endsWith('s') // Simple heuristic for plural resource names
+        );
+        
+        if (resourceArrayKey) {
+            console.log(`Found array in data.${resourceArrayKey}`);
+            return data[resourceArrayKey] as T;
+        }
+        
+        // As a fallback, return the object itself
+        return data as T;
+    }
+
+    // If we can't determine the response format, return the whole thing
+    console.log('Using fallback: returning entire response as-is');
+    return data as T;
+}
+
 // Helper methods to make the API easier to use
 export const api = {
+    /**
+     * Make a GET request
+     */
     get: (url: string, options: FetchOptions = {}) =>
         fetchWithInterceptor(url, { ...options, method: "GET" }),
 
+    /**
+     * Make a POST request with JSON data
+     */
     post: (url: string, data?: any, options: FetchOptions = {}) =>
         fetchWithInterceptor(url, {
             ...options,
@@ -170,6 +236,9 @@ export const api = {
             body: data ? JSON.stringify(data) : undefined
         }),
 
+    /**
+     * Make a PUT request with JSON data
+     */
     put: (url: string, data?: any, options: FetchOptions = {}) =>
         fetchWithInterceptor(url, {
             ...options,
@@ -177,6 +246,9 @@ export const api = {
             body: data ? JSON.stringify(data) : undefined
         }),
 
+    /**
+     * Make a PATCH request with JSON data
+     */
     patch: (url: string, data?: any, options: FetchOptions = {}) =>
         fetchWithInterceptor(url, {
             ...options,
@@ -184,21 +256,78 @@ export const api = {
             body: data ? JSON.stringify(data) : undefined
         }),
 
+    /**
+     * Make a DELETE request
+     */
     delete: (url: string, options: FetchOptions = {}) =>
         fetchWithInterceptor(url, { ...options, method: "DELETE" }),
 
-    // Helper to automatically parse JSON from the response
+    /**
+     * Make a GET request and automatically parse JSON response
+     * For use with React Query queryFn or direct API access
+     */
     async getJSON<T>(url: string, options: FetchOptions = {}): Promise<T> {
         const response = await fetchWithInterceptor(url, {
             ...options,
             method: "GET",
             showSuccessToast: false
         });
-
-        if (!response.ok) {
-            throw new Error(`HTTP error: ${response.status}`);
-        }
-
-        return response.json();
+        
+        return parseApiResponse<T>(response);
     },
+    
+    /**
+     * Make a POST request and automatically parse JSON response
+     * For use with React Query mutation functions
+     */
+    async postJSON<T>(url: string, data?: any, options: FetchOptions = {}): Promise<T> {
+        const response = await fetchWithInterceptor(url, {
+            ...options,
+            method: "POST",
+            body: data ? JSON.stringify(data) : undefined
+        });
+        
+        return parseApiResponse<T>(response);
+    },
+    
+    /**
+     * Make a PUT request and automatically parse JSON response
+     * For use with React Query mutation functions
+     */
+    async putJSON<T>(url: string, data?: any, options: FetchOptions = {}): Promise<T> {
+        const response = await fetchWithInterceptor(url, {
+            ...options,
+            method: "PUT",
+            body: data ? JSON.stringify(data) : undefined
+        });
+        
+        return parseApiResponse<T>(response);
+    },
+    
+    /**
+     * Make a PATCH request and automatically parse JSON response
+     * For use with React Query mutation functions
+     */
+    async patchJSON<T>(url: string, data?: any, options: FetchOptions = {}): Promise<T> {
+        const response = await fetchWithInterceptor(url, {
+            ...options,
+            method: "PATCH",
+            body: data ? JSON.stringify(data) : undefined
+        });
+        
+        return parseApiResponse<T>(response);
+    },
+    
+    /**
+     * Make a DELETE request and automatically parse JSON response
+     * For use with React Query mutation functions
+     */
+    async deleteJSON<T>(url: string, options: FetchOptions = {}): Promise<T> {
+        const response = await fetchWithInterceptor(url, {
+            ...options,
+            method: "DELETE"
+        });
+        
+        return parseApiResponse<T>(response);
+    }
 };

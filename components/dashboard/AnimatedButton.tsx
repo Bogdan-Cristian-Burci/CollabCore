@@ -19,7 +19,7 @@ const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
         variant={variant} 
         size={size}
         className={cn(
-          "relative overflow-hidden transition-all duration-200 cursor-pointer border-primary",
+          "relative overflow-hidden transition-all duration-300 cursor-pointer border-primary",
           "before:absolute before:bottom-0 before:left-0 before:right-0 before:top-0 before:m-auto before:z-0",
           "before:h-0 before:w-0 before:bg-primary before:duration-300 before:ease-out",
           "hover:text-primary-foreground hover:border-primary",
