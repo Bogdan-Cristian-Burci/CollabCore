@@ -13,7 +13,7 @@ interface RoleKeys extends ReturnType<typeof createQueryKeys> {
 }
 
 // Add custom query keys for role permissions
-(roleKeys as RoleKeys).permissions = (roleId: number) => [...roleKeys.detail(roleId as number), 'permissions'] as const;
+(roleKeys as any).permissions = (roleId: number) => [...roleKeys.detail(roleId), 'permissions'] as const;
 
 // Create standardized hooks for roles
 const roleHooks = createResourceHooks<Role>(
@@ -99,14 +99,15 @@ export function useRole(id: number) {
 /**
  * Hook to get and update permissions for a specific role
  */
-export function useRolePermissions(roleId: number) {
+export function useRolePermissions(roleId: number, options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
+  const isEnabled = options?.enabled !== undefined ? options.enabled : !!roleId;
 
   // Query for role permissions
   const permissionsQuery = useQuery({
-    queryKey: roleKeys.permissions(roleId),
+    queryKey: (roleKeys as any).permissions(roleId),
     queryFn: () => getRolePermissions(roleId),
-    enabled: !!roleId,
+    enabled: isEnabled && !!roleId,
   });
 
   // Mutation to update role permissions
@@ -116,7 +117,7 @@ export function useRolePermissions(roleId: number) {
       // Invalidate both the role permissions query and the role detail query
       // Use Promise.all to wait for both queries to be invalidated
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: roleKeys.permissions(roleId) as any }),
+        queryClient.invalidateQueries({ queryKey: (roleKeys as any).permissions(roleId) }),
         queryClient.invalidateQueries({ queryKey: roleKeys.detail(roleId) })
       ]);
     },

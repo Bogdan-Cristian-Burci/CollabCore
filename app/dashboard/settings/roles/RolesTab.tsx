@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import RoleCard from "@/components/dashboard/RoleCard";
-import { useRoles } from "@/lib/hooks/useRoles";
+import ExpandedRoleCard from "@/components/dashboard/ExpandedRoleCard";
+import { useRoles, useRolePermissions } from "@/lib/hooks/useRoles";
 import { Role } from "@/types/role";
 
 export default function RolesTab() {
@@ -12,8 +13,26 @@ export default function RolesTab() {
     error, 
     refetch 
   } = useRoles();
-
   
+  const [expandedRoleId, setExpandedRoleId] = useState<number | null>(null);
+  const expandedRole = roles.find(role => role.id === expandedRoleId);
+  
+  // Fetch permissions only when a role is expanded
+  const { 
+    permissions, 
+    isLoading: isLoadingPermissions 
+  } = useRolePermissions(
+    expandedRoleId || 0, 
+    { enabled: expandedRoleId !== null }
+  );
+
+  const handleViewPermissions = (roleId: number) => {
+    setExpandedRoleId(roleId);
+  };
+
+  const handleClosePermissions = () => {
+    setExpandedRoleId(null);
+  };
 
   if (isLoading) {
     return (
@@ -57,29 +76,31 @@ export default function RolesTab() {
 
   return (
     <div className="flex flex-col h-full p-4 space-y-6">
-      <div className="relative grid auto-rows-max items-stretch grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-h-[600px]">
-        {roles.map((role: Role) => {
-          // Map permissions to strings, handling both string arrays and object arrays
-          const permissionsList = Array.isArray(role.permissions) ? role.permissions : [];
-          const mappedPermissions = permissionsList.map(p => {
-            if (typeof p === 'string') return p;
-            if (typeof p === 'object' && p !== null) {
-              return p.display_name || p.name || JSON.stringify(p);
-            }
-            return String(p);
-          });
-          
-          return (
-            <RoleCard
-              key={role.id}
-              name={role.display_name || role.name}
-              description={role.description || ''}
-              isSystemRole={role.is_system_role}
-              users={role.users || []}
-              permissions={mappedPermissions}
+      <div className="relative grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" style={{ gridTemplateRows: 'repeat(auto-fill, minmax(250px, 1fr))', minHeight: '300px' }}>
+        {/* Regular role cards */}
+        {roles.map((role: Role) => (
+          <RoleCard
+            key={role.id}
+            id={role.id}
+            name={role.display_name || role.name}
+            description={role.description || ''}
+            isSystemRole={role.is_system_role}
+            users={role.users || []}
+            onViewPermissions={() => handleViewPermissions(role.id)}
+          />
+        ))}
+        
+        {/* Expanded role card as an overlay that covers the entire grid */}
+        {expandedRoleId !== null && expandedRole && (
+          <div className="absolute inset-0 z-10" style={{ gridColumn: '1 / -1', gridRow: '1 / span 3' }}>
+            <ExpandedRoleCard
+              roleName={expandedRole.display_name || expandedRole.name}
+              permissions={permissions}
+              isLoading={isLoadingPermissions}
+              onClose={handleClosePermissions}
             />
-          );
-        })}
+          </div>
+        )}
       </div>
       
       {roles.length === 0 && (

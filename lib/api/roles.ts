@@ -42,23 +42,22 @@ export async function fetchRoles(): Promise<Role[]> {
 // Custom role-related API functions beyond basic CRUD
 export async function getRolePermissions(roleId: number): Promise<string[]> {
   try {
-    const response = await api.getJSON<{permissions: string[]}>(`/api/roles/${roleId}/permissions`);
-    console.log('Role permissions response:', response);
+    // Use the role detail endpoint instead of a dedicated permissions endpoint
+    const response = await api.getJSON<{role: Role}>(`/api/roles/${roleId}`);
     
-    if (response?.permissions && Array.isArray(response.permissions)) {
-      return response.permissions;
+    // Extract permissions from the role object
+    if (response?.role?.permissions && Array.isArray(response.role.permissions)) {
+      // Map permission objects to strings (display_name or name)
+      return response.role.permissions.map(p => {
+        if (typeof p === 'string') return p;
+        if (typeof p === 'object' && p !== null) {
+          return p.display_name || p.name || JSON.stringify(p);
+        }
+        return String(p);
+      });
     }
     
-    // Fallback for different response formats
-    if (Array.isArray(response)) {
-      return response;
-    }
-    
-    if (response?.data && Array.isArray(response.data)) {
-      return response.data;
-    }
-    
-    console.warn('Unexpected role permissions format, returning empty array:', response);
+    console.warn('No permissions found for role or unexpected format, returning empty array:', response);
     return [];
   } catch (error) {
     console.error(`Error fetching permissions for role ${roleId}:`, error);
