@@ -5,44 +5,37 @@ import { api } from '@/lib/fetch-interceptor';
 // Create a typed API module for roles
 const rolesApi = createApiModule<Role>('/api/roles');
 
-// Custom implementation for fetchRoles to handle the specific response format
+// Fetch roles from the API
 export async function fetchRoles(): Promise<Role[]> {
   try {
-    console.log('Fetching roles with custom implementation');
-    const response = await api.getJSON<any>('/api/roles');
-    console.log('Roles API raw response:', response);
+    // Use direct fetch which is proven to work correctly
+    const response = await fetch('/api/roles');
     
-    // Ensure we return an array of roles
-    if (response && response.roles && Array.isArray(response.roles)) {
-      console.log('Found roles array in response.roles');
-      return response.roles;
+    if (!response.ok) {
+      throw new Error(`Failed to fetch roles: ${response.status} ${response.statusText}`);
     }
     
-    // Fallback for direct array response
-    if (Array.isArray(response)) {
-      console.log('Response is directly an array');
-      return response;
+    const data = await response.json();
+    
+    // Handle the known response format from this API endpoint
+    if (data.roles && Array.isArray(data.roles)) {
+      return data.roles;
     }
     
-    // Fallback for data property
-    if (response && response.data) {
-      if (Array.isArray(response.data)) {
-        console.log('Found array in response.data');
-        return response.data;
-      }
-      
-      // Check if data.roles exists
-      if (response.data.roles && Array.isArray(response.data.roles)) {
-        console.log('Found array in response.data.roles');
-        return response.data.roles;
-      }
+    // Fallback logic in case the response format changes
+    if (Array.isArray(data)) {
+      return data;
     }
     
-    console.warn('Unexpected response format, returning empty array:', response);
+    if (data?.data && Array.isArray(data.data)) {
+      return data.data;
+    }
+    
+    // Unexpected format, but try to handle it gracefully
     return [];
   } catch (error) {
     console.error('Error fetching roles:', error);
-    return [];
+    throw error; // Let React Query handle the error
   }
 }
 

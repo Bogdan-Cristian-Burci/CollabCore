@@ -18,7 +18,10 @@ export function createApiModule<
      */
     getAll: async (): Promise<TResource[]> => {
       try {
-        return await api.getJSON<TResource[]>(resourcePath);
+        console.log(`API factory: fetching all resources from ${resourcePath}`);
+        const result = await api.getJSON<TResource[]>(resourcePath);
+        console.log(`API factory: successfully fetched from ${resourcePath}:`, result);
+        return result;
       } catch (error) {
         console.error(`Error fetching ${resourcePath}:`, error);
         return [];

@@ -4,52 +4,89 @@ import { NextResponse } from "next/server";
 
 // GET - List roles
 export async function GET() {
-  // Debug the API base URL
+  // Get the API base URL and add detailed debugging
   const apiUrl = getApiBaseUrl();
-  console.log(`API Base URL: ${apiUrl}`);
+  console.log(`[DEBUG] Roles API URL: ${apiUrl}/api/roles`);
   
-  // First try to use the proxyRequest pattern that works for organizations
   try {
-    console.log("Using proxyRequest to fetch roles");
+    // Get auth token with detailed logging
+    console.log("[DEBUG] Getting auth token for roles request");
+    const { token, status, error } = await getAuthToken();
     
-    // Add a direct fetch attempt for debugging
-    try {
-      console.log("Attempting direct fetch to debug");
-      const { token } = await getAuthToken();
-      if (token) {
-        const directResponse = await fetch(`${apiUrl}/api/roles`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-          }
-        });
-        console.log(`Direct fetch status: ${directResponse.status}`);
-        if (directResponse.ok) {
-          const directData = await directResponse.json();
-          console.log("Direct fetch response:", directData);
-        }
-      }
-    } catch (debugError) {
-      console.log("Debug fetch failed:", debugError);
+    console.log(`[DEBUG] Auth token status: ${status}, Error: ${error || 'none'}`);
+    console.log(`[DEBUG] Token present: ${!!token}`);
+    
+    if (!token) {
+      console.log("[DEBUG] No token available, returning 401");
+      return NextResponse.json({ message: "Authentication required" }, { status: 401 });
     }
     
-    // Now use the proper proxyRequest
-    return proxyRequest(
-      new Request(`${getApiBaseUrl()}/dummy`, { method: "GET" }),
-      "/api/roles", // PLURAL as confirmed multiple times
-      {
-        method: "GET",
-        customErrorMessage: "Failed to fetch roles"
+    // Log token details (but not the actual token for security)
+    console.log(`[DEBUG] Token length: ${token.length}, first 5 chars: ${token.substring(0, 5)}...`);
+    
+    // Now try the actual roles endpoint
+    console.log("[DEBUG] Making roles request to the external API");
+    const response = await fetch(`${apiUrl}/api/roles`, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
       }
-    );
+    });
+    
+    console.log(`[DEBUG] Roles response status: ${response.status}`);
+    
+    if (!response.ok) {
+      const status = response.status;
+      const text = await response.text();
+      console.log(`[DEBUG] Error response text: ${text}`);
+      
+      let message;
+      try {
+        const data = JSON.parse(text);
+        message = data.message || "Failed to fetch roles";
+        console.log(`[DEBUG] Parsed error message: ${message}`);
+      } catch {
+        message = "Failed to fetch roles";
+        console.log(`[DEBUG] Could not parse error message, using default`);
+      }
+      
+      // Special handling for 403 errors
+      if (status === 403) {
+        console.log("[DEBUG] 403 Forbidden - likely a permissions issue");
+        // Create a more user-friendly error message
+        return NextResponse.json({
+          message: "You don't have permission to access roles.",
+          rolesForbidden: true
+        }, { status: 403 });
+      }
+      
+      return NextResponse.json({ message }, { status });
+    }
+    
+    // On success, return the API response
+    console.log("[DEBUG] Roles request successful, parsing JSON");
+    const data = await response.json();
+    console.log(`[DEBUG] Roles data received:`, data);
+    console.log(`[DEBUG] Response keys: ${Object.keys(data).join(', ')}`);
+    
+    // Don't modify the response structure - return it exactly as received
+    // This ensures the client receives the same data format as your Postman request
+    
+    // Log what format we're returning
+    if (data.roles && Array.isArray(data.roles)) {
+      console.log(`[DEBUG] Returning response with roles array containing ${data.roles.length} items`);
+    } else if (Array.isArray(data)) {
+      console.log(`[DEBUG] Returning direct array response with ${data.length} items`);
+    } else if (data.data && Array.isArray(data.data)) {
+      console.log(`[DEBUG] Returning response with data array containing ${data.data.length} items`);
+    }
+    
+    return NextResponse.json(data);
   } catch (error) {
-    // If the proxyRequest fails, fall back to mock data
-    console.error("proxyRequest failed:", error);
-    console.log("Falling back to mock data");
-    const mockData = await mockRolesData();
-    return NextResponse.json(mockData);
+    console.error("[DEBUG] Unhandled error in roles API route:", error);
+    return NextResponse.json({ message: "Failed to fetch roles" }, { status: 500 });
   }
 }
 
@@ -61,91 +98,4 @@ export async function POST(request: Request) {
   });
 }
 
-// For demo/development purposes
-export async function mockRolesData() {
-  return {
-    roles: [
-      {
-        id: 1,
-        name: "admin",
-        display_name: "Administrator",
-        description: "Full access to all system features",
-        level: 100,
-        permissions: [
-          { id: 1, name: "users.create", display_name: "Create Users", description: "Can create new users", category: "Users" },
-          { id: 2, name: "users.update", display_name: "Update Users", description: "Can update users", category: "Users" },
-          { id: 25, name: "settings.manage", display_name: "Manage Settings", description: "Can manage system settings", category: "Settings" }
-        ],
-        users: [
-          { id: 1, name: "John Admin" }
-        ],
-        users_count: 1,
-        is_system_role: true
-      },
-      {
-        id: 2,
-        name: "manager",
-        display_name: "Manager",
-        description: "Can manage projects and teams",
-        level: 80,
-        permissions: [
-          { id: 9, name: "projects.create", display_name: "Create Projects", description: "Can create new projects", category: "Projects" },
-          { id: 13, name: "teams.create", display_name: "Create Teams", description: "Can create new teams", category: "Teams" }
-        ],
-        users: [
-          { id: 2, name: "Jane Manager" },
-          { id: 3, name: "Mike Manager" }
-        ],
-        users_count: 2,
-        is_system_role: true
-      },
-      {
-        id: 3,
-        name: "developer",
-        display_name: "Developer",
-        description: "Can work on assigned tasks and projects",
-        level: 50,
-        permissions: [
-          { id: 12, name: "projects.view", display_name: "View Projects", description: "Can view project details", category: "Projects" },
-          { id: 17, name: "tasks.create", display_name: "Create Tasks", description: "Can create new tasks", category: "Tasks" }
-        ],
-        users: [
-          { id: 4, name: "Alice Dev" },
-          { id: 5, name: "Bob Dev" },
-          { id: 6, name: "Charlie Dev" }
-        ],
-        users_count: 3,
-        is_system_role: true
-      },
-      {
-        id: 4,
-        name: "guest",
-        display_name: "Guest",
-        description: "Limited access to view content only",
-        level: 10,
-        permissions: [
-          { id: 4, name: "users.view", display_name: "View Users", description: "Can view user details", category: "Users" },
-          { id: 8, name: "roles.view", display_name: "View Roles", description: "Can view role details", category: "Roles" }
-        ],
-        users: [],
-        users_count: 0,
-        is_system_role: true
-      },
-      {
-        id: 5,
-        name: "custom",
-        display_name: "Custom Role",
-        description: "A custom role with specific permissions",
-        level: 30,
-        permissions: [
-          { id: 22, name: "comments.create", display_name: "Create Comments", description: "Can create comments", category: "Comments" }
-        ],
-        users: [
-          { id: 7, name: "Custom User" }
-        ],
-        users_count: 1,
-        is_system_role: false
-      }
-    ]
-  };
-}
+// No mock data - we only use real API data

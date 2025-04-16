@@ -27,6 +27,10 @@ export async function fetchWithInterceptor(
 
     const isServerSide = typeof window === 'undefined';
     const isClientSide = !isServerSide;
+
+    console.log('[DEBUG] Fetching URL:', url);
+    const timestamp = new Date().toISOString();
+    console.log(`[DEBUG] Request timestamp: ${timestamp}`);
     
     try {
         // Determine the API URL based on environment
@@ -36,15 +40,18 @@ export async function fetchWithInterceptor(
             // On server side, always use external API URL to avoid recursion
             const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
             apiUrl = `${API_URL}${url}`;
+            console.log(`[DEBUG] Server-side request to: ${apiUrl}`);
         } else {
             // On client side, use Next.js API routes as our API layer
             // This keeps all API calls consistent through our own API routes
             if (url.startsWith('/api/')) {
                 apiUrl = url;
+                console.log(`[DEBUG] Client-side request to internal API: ${apiUrl}`);
             } else {
                 // For cases where we might need to call external APIs directly
                 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
                 apiUrl = `${API_URL}${url}`;
+                console.log(`[DEBUG] Client-side request to external API: ${apiUrl}`);
             }
         }
 
@@ -162,7 +169,8 @@ export async function fetchWithInterceptor(
  */
 export async function parseApiResponse<T>(response: Response): Promise<T> {
     if (!response.ok) {
-        throw new Error(`HTTP error: ${response.status}`);
+        // Simply throw the error and let calling code handle it
+        throw new Error(`HTTP error: ${response.status} ${response.statusText}`);
     }
 
     const contentType = response.headers.get("content-type");
@@ -172,7 +180,15 @@ export async function parseApiResponse<T>(response: Response): Promise<T> {
 
     const data = await response.json();
     console.log('Parsing API response:', data);
+    console.log('URL that was requested:', response.url);
+    console.log('Response keys:', Object.keys(data));
 
+    // For the specific case of /api/roles which returns { roles: [...] }
+    if (response.url.includes('/api/roles') && data?.roles && Array.isArray(data.roles)) {
+        console.log('Found roles data in the roles key:', data.roles.length, 'items');
+        return data.roles as T;
+    }
+    
     // Handle different response formats:
     // 1. { data: [...] } - Standard Laravel API response
     if (data?.data) {
@@ -198,6 +214,8 @@ export async function parseApiResponse<T>(response: Response): Promise<T> {
     
     // 4. Any object with an array property (as a last resort)
     if (data && typeof data === 'object') {
+        console.log('Response is an object, keys:', Object.keys(data));
+        
         // First try to find common plural field names that might contain arrays
         const resourceArrayKey = Object.keys(data).find(key => 
             Array.isArray(data[key]) && 
@@ -210,6 +228,7 @@ export async function parseApiResponse<T>(response: Response): Promise<T> {
         }
         
         // As a fallback, return the object itself
+        console.log('Returning the entire object as-is');
         return data as T;
     }
 

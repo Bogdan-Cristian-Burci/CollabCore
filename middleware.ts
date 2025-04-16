@@ -8,9 +8,20 @@ export async function middleware(request: NextRequest) {
 
   // Define public paths that don't require authentication
   const publicPaths = ["/login", "/register"];
+  // Define API paths that should bypass the middleware
+  const apiPaths = ["/api"];
+  
   const isPublicPath = publicPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
   );
+  const isApiPath = apiPaths.some(path => 
+    request.nextUrl.pathname.startsWith(path)
+  );
+
+  // If it's an API path, just let it through - API requests will handle auth errors separately
+  if (isApiPath) {
+    return NextResponse.next();
+  }
 
   // Redirect logic
   if (!isLoggedIn && !isPublicPath) {

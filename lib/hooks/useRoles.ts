@@ -7,8 +7,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 // Create standardized query keys for roles
 export const roleKeys = createQueryKeys('roles');
 
+// Extend the query keys type to include permissions
+interface RoleKeys extends ReturnType<typeof createQueryKeys> {
+  permissions: (roleId: number) => readonly [string, "detail", number, "permissions"];
+}
+
 // Add custom query keys for role permissions
-roleKeys.permissions = (roleId: number) => [...roleKeys.detail(roleId), 'permissions'] as const;
+(roleKeys as RoleKeys).permissions = (roleId: number) => [...roleKeys.detail(roleId), 'permissions'] as const;
 
 // Create standardized hooks for roles
 const roleHooks = createResourceHooks<Role>(
@@ -24,12 +29,24 @@ const roleHooks = createResourceHooks<Role>(
  * Hook to fetch and manage all roles data
  */
 export function useRoles() {
-  const { data = [], isLoading, isFetching, error, refetch } = roleHooks.useGetAll();
+  const { 
+    data = [], 
+    isLoading, 
+    isFetching, 
+    error, 
+    refetch 
+  } = roleHooks.useGetAll({
+    // Add additional options for better reliability
+    retry: 3,
+    retryDelay: 1000
+  });
+  
   const { mutate: createRole, isPending: isCreating, error: createError } = roleHooks.useCreate();
   const { mutate: deleteRoleMutation, isPending: isDeleting, error: deleteError } = roleHooks.useDelete();
 
   // Wrap delete mutation to match previous API
   const deleteRole = (id: number) => deleteRoleMutation(id);
+
 
   return {
     roles: data,
@@ -95,10 +112,13 @@ export function useRolePermissions(roleId: number) {
   // Mutation to update role permissions
   const updatePermissionsMutation = useMutation({
     mutationFn: (permissions: string[]) => updateRolePermissions(roleId, permissions),
-    onSuccess: () => {
+    onSuccess: async () => {
       // Invalidate both the role permissions query and the role detail query
-      queryClient.invalidateQueries({ queryKey: roleKeys.permissions(roleId) });
-      queryClient.invalidateQueries({ queryKey: roleKeys.detail(roleId) });
+      // Use Promise.all to wait for both queries to be invalidated
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: roleKeys.permissions(roleId) as any }),
+        queryClient.invalidateQueries({ queryKey: roleKeys.detail(roleId) })
+      ]);
     },
   });
 
@@ -113,7 +133,8 @@ export function useRolePermissions(roleId: number) {
   };
 }
 
-// Export the raw hooks for direct use
+
+// Default export for backward compatibility
 export default {
   ...roleHooks,
   useRolePermissions,
