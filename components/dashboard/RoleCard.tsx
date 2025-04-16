@@ -18,12 +18,11 @@ interface RoleCardProps {
   name: string;
   description: string;
   isSystemRole: boolean;
-  usersCount: number;
   users: UserData[];
   permissions: string[];
 }
 
-export default function RoleCard({ name, description, isSystemRole, usersCount, users, permissions }: RoleCardProps) {
+export default function RoleCard({ name, description, isSystemRole, users, permissions }: RoleCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   
   const icon = isSystemRole ? <FileLock /> : <FileLock2 />;
@@ -36,7 +35,7 @@ export default function RoleCard({ name, description, isSystemRole, usersCount, 
     <div className="perspective">
       <div 
         className={cn(
-          "relative transition-all duration-700 preserve-3d", 
+          "relative transition-all duration-700 preserve-3d h-full",
           isFlipped ? "rotate-y-180" : ""
         )}
         style={{ 
@@ -46,7 +45,7 @@ export default function RoleCard({ name, description, isSystemRole, usersCount, 
         }}
       >
         {/* Front side of the card */}
-        <Card className="backface-hidden w-full">
+        <Card className="backface-hidden w-full h-full flex flex-col justify-between">
           <CardHeader className="flex flex-row items-center justify-between">
             {icon}
             <h3 className="mt-8 scroll-m-20 text-2xl font-semibold tracking-tight">
@@ -58,23 +57,31 @@ export default function RoleCard({ name, description, isSystemRole, usersCount, 
             <p>{description}</p>
           </CardContent>
           <CardFooter className="flex items-center justify-between">
-            <HoverCard>
-              <HoverCardTrigger asChild>
-                <div className="flex items-center gap-2 cursor-pointer">
-                  <Users className="size-4" /> <span>{users.length}</span>
-                </div>
-              </HoverCardTrigger>
-              <HoverCardContent className="w-80">
-                <ScrollArea className="h-72">
-                  {users.length > 0 && users.map((user) => (
-                    <div key={user.id} className="py-2">
-                      {user.name}
-                      <Separator className="mt-2" />
-                    </div>
-                  ))}
-                </ScrollArea>
-              </HoverCardContent>
-            </HoverCard>
+            {
+                users.length > 0 ?
+                    (<HoverCard>
+                        <HoverCardTrigger asChild>
+                          <div className="flex items-center gap-2 cursor-pointer">
+                            <Users className="size-4" /> <span>{users.length}</span>
+                          </div>
+                        </HoverCardTrigger>
+                        <HoverCardContent className="w-80">
+                          <ScrollArea className="max-h-9">
+                            {users.length > 0 && users.map((user) => (
+                              <div key={user.id} className="py-2">
+                                {user.name}
+                                <Separator className="mt-2" />
+                              </div>
+                            ))}
+                          </ScrollArea>
+                        </HoverCardContent>
+                      </HoverCard>)
+                    : (
+                        <div className="flex items-center gap-2">
+                          <Users className="size-4" /> <span>No users with this role</span>
+                        </div>
+                    )
+            }
             <AnimatedButton 
               icon={ReceiptText} 
               onClick={toggleFlip} 

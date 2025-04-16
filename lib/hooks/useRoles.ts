@@ -13,7 +13,7 @@ interface RoleKeys extends ReturnType<typeof createQueryKeys> {
 }
 
 // Add custom query keys for role permissions
-(roleKeys as RoleKeys).permissions = (roleId: number) => [...roleKeys.detail(roleId), 'permissions'] as const;
+(roleKeys as RoleKeys).permissions = (roleId: number) => [...roleKeys.detail(roleId as number), 'permissions'] as const;
 
 // Create standardized hooks for roles
 const roleHooks = createResourceHooks<Role>(

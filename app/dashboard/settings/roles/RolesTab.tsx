@@ -57,14 +57,7 @@ export default function RolesTab() {
 
   return (
     <div className="flex flex-col h-full p-4 space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Organization Roles</h1>
-        <button className="px-4 py-2 bg-primary text-primary-foreground rounded-md">
-          Add New Role
-        </button>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="relative grid auto-rows-max items-stretch grid-cols-1 gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 min-h-[600px]">
         {roles.map((role: Role) => {
           // Map permissions to strings, handling both string arrays and object arrays
           const permissionsList = Array.isArray(role.permissions) ? role.permissions : [];
@@ -82,7 +75,6 @@ export default function RolesTab() {
               name={role.display_name || role.name}
               description={role.description || ''}
               isSystemRole={role.is_system_role}
-              usersCount={role.users_count || 0}
               users={role.users || []}
               permissions={mappedPermissions}
             />
