@@ -11,7 +11,7 @@ interface AnimatedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   className?: string;
 }
 
-const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
+export const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
   ({ text, icon: Icon = Check, variant = "outline", size = "sm", className, ...props }, ref) => {
     return (
       <Button 
@@ -38,5 +38,3 @@ const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
 );
 
 AnimatedButton.displayName = "AnimatedButton";
-
-export default AnimatedButton;

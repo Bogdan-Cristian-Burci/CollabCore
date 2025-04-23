@@ -1,6 +1,6 @@
 import { proxyRequest } from "@/lib/server/api-helpers";
 import { NextRequest, NextResponse } from "next/server";
-import { mockRolesData } from "../route";
+
 
 // GET - Get role by ID
 export async function GET(

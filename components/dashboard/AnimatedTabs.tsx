@@ -38,7 +38,7 @@ export  function AnimatedTabsList({
       setIndicatorStyle({
         left: offsetLeft,
         width: offsetWidth,
-        height: '100%',
+        height: 100,
         opacity: 1,
       })
     }
@@ -55,7 +55,7 @@ export  function AnimatedTabsList({
         setIndicatorStyle({
           left: offsetLeft,
           width: offsetWidth,
-          height: '100%',
+          height: 100,
           opacity: 1,
         })
       }

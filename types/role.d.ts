@@ -4,6 +4,7 @@ export interface RolePermission {
   display_name: string;
   description: string;
   category: string;
+  is_active:boolean;
 }
 
 export interface RoleUser {
