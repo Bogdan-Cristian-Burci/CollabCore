@@ -4,6 +4,7 @@ export interface Permission {
   display_name: string;
   description: string;
   category: string;
+  is_active: boolean;
 }
 
 export interface PermissionsApiResponse {

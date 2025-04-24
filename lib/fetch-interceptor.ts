@@ -278,8 +278,12 @@ export const api = {
     /**
      * Make a DELETE request
      */
-    delete: (url: string, options: FetchOptions = {}) =>
-        fetchWithInterceptor(url, { ...options, method: "DELETE" }),
+    delete: (url: string, data?: any, options: FetchOptions = {}) =>
+        fetchWithInterceptor(url, {
+            ...options,
+            method: "DELETE",
+            body: data ? JSON.stringify(data) : undefined
+        }),
 
     /**
      * Make a GET request and automatically parse JSON response
@@ -341,10 +345,11 @@ export const api = {
      * Make a DELETE request and automatically parse JSON response
      * For use with React Query mutation functions
      */
-    async deleteJSON<T>(url: string, options: FetchOptions = {}): Promise<T> {
+    async deleteJSON<T>(url: string, data?: any, options: FetchOptions = {}): Promise<T> {
         const response = await fetchWithInterceptor(url, {
             ...options,
-            method: "DELETE"
+            method: "DELETE",
+            body: data ? JSON.stringify(data) : undefined
         });
         
         return parseApiResponse<T>(response);

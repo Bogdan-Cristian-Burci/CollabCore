@@ -1,5 +1,6 @@
 import { proxyRequest } from "@/lib/server/api-helpers";
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 
 
 // GET - Get role by ID
@@ -7,7 +8,8 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
+  // Use await for params to fix the warning
+  const id = await Promise.resolve(params.id);
   
   return proxyRequest(
     new Request(`${process.env.NEXT_PUBLIC_API_URL}/dummy`, { method: "GET" }),
@@ -24,7 +26,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
+  // Use await for params to fix the warning
+  const id = await Promise.resolve(params.id);
   
   return proxyRequest(
     request,
@@ -42,7 +45,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
+  // Use await for params to fix the warning
+  const id = await Promise.resolve(params.id);
   
   return proxyRequest(
     request,

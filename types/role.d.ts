@@ -22,6 +22,8 @@ export interface Role {
   users: RoleUser[];
   users_count: number;
   is_system_role: boolean;
+  is_system?: boolean; // Alternate property name
+  is_customized?: boolean; // Flag indicating if a system role has been customized
 }
 
 export interface RolesApiResponse {

@@ -1,6 +1,7 @@
 import { Role } from '@/types/role';
 import { createApiModule } from '@/lib/api-factory';
 import { api } from '@/lib/fetch-interceptor';
+import { toast } from 'sonner';
 
 // Create a typed API module for roles
 const rolesApi = createApiModule<Role>('/api/roles');
@@ -67,12 +68,44 @@ export async function getRolePermissions(roleId: number): Promise<string[]> {
 
 export async function updateRolePermissions(roleId: number, permissions: string[]): Promise<boolean> {
   try {
-    await api.putJSON(`/api/roles/${roleId}/permissions`, { permissions }, {
+    await api.postJSON(`/api/roles/${roleId}/permissions`, { permissions }, {
       showSuccessToast: true
     });
     return true;
   } catch (error) {
     console.error(`Error updating permissions for role ${roleId}:`, error);
+    return false;
+  }
+}
+
+export async function removePermissionsFromRole(roleId: number, permissions: string[]): Promise<boolean> {
+  try {
+    await api.deleteJSON(`/api/roles/${roleId}/permissions`, { permissions }, {
+      showSuccessToast: true
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error removing permissions from role ${roleId}:`, error);
+    return false;
+  }
+}
+
+/**
+ * Revert a custom role back to system default
+ */
+export async function revertRoleToDefault(roleId: number): Promise<boolean> {
+  try {
+    await api.postJSON(`/api/roles/${roleId}/revert`, {}, {
+      showSuccessToast: true
+    });
+    
+    // Show a success toast
+    toast.success("Role successfully reverted to system defaults");
+    
+    return true;
+  } catch (error) {
+    console.error(`Error reverting role ${roleId} to default:`, error);
+    toast.error("Failed to revert role to system defaults");
     return false;
   }
 }
@@ -88,5 +121,7 @@ export default {
   ...rolesApi,
   getAll: fetchRoles, // Override the getAll method with our custom implementation
   getRolePermissions,
-  updateRolePermissions
+  updateRolePermissions,
+  removePermissionsFromRole,
+  revertRoleToDefault
 };

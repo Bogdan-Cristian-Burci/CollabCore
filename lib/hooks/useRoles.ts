@@ -1,5 +1,10 @@
 import { Role } from '@/types/role';
-import rolesApi, { getRolePermissions, updateRolePermissions } from '@/lib/api/roles';
+import rolesApi, { 
+  getRolePermissions, 
+  updateRolePermissions, 
+  removePermissionsFromRole,
+  revertRoleToDefault
+} from '@/lib/api/roles';
 import { createQueryKeys } from '@/lib/api-factory';
 import { createResourceHooks } from '@/lib/query-hooks';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -67,6 +72,8 @@ export function useRoles() {
  * Hook to fetch and manage a single role by ID
  */
 export function useRole(id: number) {
+  const queryClient = useQueryClient();
+  
   const { 
     data: role, 
     isLoading, 
@@ -84,6 +91,18 @@ export function useRole(id: number) {
   // Wrap update mutation to match previous API
   const updateRole = (data: Partial<Role>) => updateRoleMutation({ id, data });
 
+  // Mutation for reverting a role to system default
+  const revertToDefaultMutation = useMutation({
+    mutationFn: () => revertRoleToDefault(id),
+    onSuccess: async () => {
+      // Invalidate role detail and permissions queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: roleKeys.detail(id) }),
+        queryClient.invalidateQueries({ queryKey: (roleKeys as any).permissions(id) })
+      ]);
+    }
+  });
+
   return {
     role,
     isLoading,
@@ -93,6 +112,9 @@ export function useRole(id: number) {
     updateRole,
     isUpdating,
     updateError,
+    revertToDefault: revertToDefaultMutation.mutate,
+    isReverting: revertToDefaultMutation.isPending,
+    revertError: revertToDefaultMutation.error
   };
 }
 
@@ -123,6 +145,18 @@ export function useRolePermissions(roleId: number, options?: { enabled?: boolean
     },
   });
 
+  // Mutation to remove permissions from a role
+  const removePermissionsMutation = useMutation({
+    mutationFn: (permissions: string[]) => removePermissionsFromRole(roleId, permissions),
+    onSuccess: async () => {
+      // Invalidate both the role permissions query and the role detail query
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: (roleKeys as any).permissions(roleId) }),
+        queryClient.invalidateQueries({ queryKey: roleKeys.detail(roleId) })
+      ]);
+    },
+  });
+
   return {
     permissions: permissionsQuery.data || [],
     isLoading: permissionsQuery.isLoading,
@@ -131,6 +165,9 @@ export function useRolePermissions(roleId: number, options?: { enabled?: boolean
     updatePermissions: updatePermissionsMutation.mutate,
     isUpdating: updatePermissionsMutation.isPending,
     updateError: updatePermissionsMutation.error,
+    removePermissions: removePermissionsMutation.mutate,
+    isRemoving: removePermissionsMutation.isPending,
+    removeError: removePermissionsMutation.error,
   };
 }
 

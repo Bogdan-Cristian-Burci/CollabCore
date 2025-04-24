@@ -119,7 +119,11 @@ export function ExpandableWrapper<T extends Record<string, any>>({
     };
 
     // Handle close details view
-    const handleCloseDetails = () => {
+    const handleCloseDetails = (e: React.MouseEvent) => {
+        // Stop event propagation to prevent other handlers from capturing this
+        e.stopPropagation();
+        console.log("Close button clicked - switching back to grid view");
+        
         setExpanded(false);
         setIndicatorStyle({
             width: 0,
@@ -386,7 +390,7 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="absolute top-0 right-0"
+                            className="absolute top-0 right-0 z-50 shadow-md hover:bg-primary hover:text-white" // Enhanced style for better visibility
                             onClick={handleCloseDetails}
                         >
                             Close
