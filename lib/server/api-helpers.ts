@@ -41,12 +41,14 @@ export async function makeServerApiRequest(
         // Build the full URL
         const API_URL = getApiBaseUrl();
         const apiUrl = `${API_URL}${endpoint}`;
-
+        
+        console.log(`[Server] Making API request to: ${apiUrl} with method ${method}`);
 
         // Build request options
         const fetchOptions: RequestInit = {
             method,
             headers: createAuthHeaders(token),
+            cache: 'no-store', // Don't cache the request
         };
 
         // Add body if provided
@@ -55,6 +57,12 @@ export async function makeServerApiRequest(
         }
 
         // Make the request
+        console.log(`[Server] Sending request to backend with options:`, {
+            url: apiUrl,
+            method: fetchOptions.method,
+            headers: Object.fromEntries(Object.entries(fetchOptions.headers || {})),
+        });
+        
         const response = await fetch(apiUrl, fetchOptions);
 
         // Handle no content response
@@ -116,8 +124,10 @@ export async function proxyRequest(
     const { method = request.method as any } = options;
 
     try {
-        // For GET requests, we don't need to parse the body
+        // For GET requests, we need to preserve query parameters
         if (method === 'GET') {
+            // The endpoint may already contain query parameters from our route handler
+            console.log('Using endpoint with query params:', endpoint);
             return makeServerApiRequest(endpoint, options);
         }
 

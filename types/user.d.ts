@@ -43,7 +43,7 @@ export interface UserResource{
     created_at:string,
     updated_at:string,
     roles:string[],
-    permissions:string[],
+
     permission_overrides:PermissionOverrides,
     organisation_id:number,
     organisation:OrganisationResource,

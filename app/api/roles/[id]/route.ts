@@ -9,7 +9,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   // Use await for params to fix the warning
-  const id = await Promise.resolve(params.id);
+    const param = await params
+    const id = await Promise.resolve(param.id);
   
   return proxyRequest(
     new Request(`${process.env.NEXT_PUBLIC_API_URL}/dummy`, { method: "GET" }),
@@ -27,7 +28,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   // Use await for params to fix the warning
-  const id = await Promise.resolve(params.id);
+    const param = await params
+    const id = await Promise.resolve(param.id);
   
   return proxyRequest(
     request,
@@ -46,7 +48,8 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   // Use await for params to fix the warning
-  const id = await Promise.resolve(params.id);
+    const param = await params
+    const id = await Promise.resolve(param.id);
   
   return proxyRequest(
     request,

@@ -95,11 +95,11 @@ export function useRole(id: number) {
   const revertToDefaultMutation = useMutation({
     mutationFn: () => revertRoleToDefault(id),
     onSuccess: async () => {
-      // Invalidate role detail and permissions queries
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: roleKeys.detail(id) }),
-        queryClient.invalidateQueries({ queryKey: (roleKeys as any).permissions(id) })
-      ]);
+      // Invalidate all roles queries instead of just the specific role
+      // This ensures we get fresh data after role is replaced
+      await queryClient.invalidateQueries({
+        queryKey: roleKeys.all(),
+      });
     }
   });
 

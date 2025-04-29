@@ -6,10 +6,23 @@ export async function GET(
     request: Request,
     { params }: { params: { id: string } }
 ) {
-    const { id } = params;
+    const { id } = await Promise.resolve(params);
+    
+    // Get query parameters from the original request URL
+    const url = new URL(request.url);
+    const includeParam = url.searchParams.get('include');
+    
+    // Create the target endpoint path with query parameters
+    let endpoint = `/api/users/${id}`;
+    if (includeParam) {
+        endpoint += `?include=${includeParam}`;
+    }
+    
+    console.log(`Using endpoint with params: ${getApiBaseUrl()}${endpoint}`);
+    
     return proxyRequest(
-        new Request(`${getApiBaseUrl()}/api/users/${id}`, { method: "GET" }),
-        `/api/users/${id}`,
+        request,
+        endpoint,
         {
             method: "GET",
             customErrorMessage: `Failed to fetch user ${id}`
@@ -22,7 +35,7 @@ export async function PATCH(
     request: Request,
     { params }: { params: { id: string } }
 ) {
-    const { id } = params;
+    const { id } = await Promise.resolve(params);
     return proxyRequest(request, `/api/users/${id}`, {
         successMessage: "User updated successfully"
     });
@@ -33,7 +46,7 @@ export async function DELETE(
     request: Request,
     { params }: { params: { id: string } }
 ) {
-    const { id } = params;
+    const { id } = await Promise.resolve(params);
     return proxyRequest(
         new Request(`${getApiBaseUrl()}/api/users/${id}`, { method: "DELETE" }),
         `/api/users/${id}`,

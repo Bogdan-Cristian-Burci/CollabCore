@@ -1,5 +1,62 @@
 import { UserResource } from "@/types/user";
 
+// Get all users by organization ID
+export async function getUsersByOrganization(organisationId: number | string): Promise<UserResource[]> {
+    try {
+        // Create URL with all parameters
+        const url = new URL('/api/users', window.location.origin);
+        url.searchParams.append('organisation_id', organisationId.toString());
+        url.searchParams.append('filter_by_org', 'true'); // Additional parameter to ensure filtering
+        url.searchParams.append('timestamp', Date.now().toString()); // Cache buster
+        
+        console.log(`API Call: fetching users with URL: ${url.toString()}`);
+        
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            },
+            credentials: 'include',
+            cache: 'no-store', // Prevent caching for fetch API
+            next: { revalidate: 0 } // Force revalidation for Next.js
+        });
+
+        if (!response.ok) {
+            console.error('Failed to fetch users by organization, status:', response.status);
+            return [];
+        }
+
+        const data = await response.json();
+        console.log('User data received:', data);
+        
+        // Double check that the data is filtered properly
+        if (data.data && Array.isArray(data.data)) {
+            // Count users by organization
+            const orgCounts = data.data.reduce((counts: Record<string, number>, user: UserResource) => {
+                const orgId = user.organisation_id?.toString();
+                if (orgId) {
+                    counts[orgId] = (counts[orgId] || 0) + 1;
+                }
+                return counts;
+            }, {});
+            
+            console.log('Users by organization:', orgCounts);
+            
+            if (orgCounts[organisationId.toString()] !== data.data.length) {
+                console.warn(`Warning: Received ${data.data.length} users, but only ${orgCounts[organisationId.toString()] || 0} belong to organization ${organisationId}`);
+            }
+        }
+        
+        return data.data || [];
+    } catch (error) {
+        console.error('Error fetching users by organization:', error);
+        return [];
+    }
+}
+
 // Fetch user profile
 export async function fetchUserProfile(): Promise<UserResource | null> {
     try {
@@ -316,6 +373,48 @@ export async function getUserPermissionOverrides(userId: string): Promise<any[]>
     } catch (error) {
         console.error(`Error fetching permission overrides for ${userId}:`, error);
         return [];
+    }
+}
+
+// Get user with permissions
+export async function getUserWithPermissions(userId: string): Promise<UserResource | null> {
+    try {
+        // Create URL with include=permissions parameter
+        const url = new URL(`/api/users/${userId}?include=permissions`, window.location.origin);
+        url.searchParams.append('timestamp', Date.now().toString()); // Cache buster
+        
+        console.log(`Fetching user permissions with URL: ${url.toString()}`);
+        
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache',
+                'Expires': '0'
+            },
+            credentials: 'include',
+            cache: 'no-store', // Prevent caching
+        });
+
+        if (!response.ok) {
+            console.error(`Failed to fetch user with permissions ${userId}, status:`, response.status);
+            return null;
+        }
+
+        const data = await response.json();
+        console.log(`Received user permissions data:`, data);
+        
+        // Check response format
+        if (data.data) {
+            return data.data;
+        } else {
+            return data; // Some APIs might return data directly without wrapping
+        }
+
+    } catch (error) {
+        console.error(`Error fetching user with permissions ${userId}:`, error);
+        return null;
     }
 }
 

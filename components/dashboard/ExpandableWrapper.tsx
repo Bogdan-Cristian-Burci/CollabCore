@@ -2,10 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import CheckBoxAsButton from "@/components/CheckBoxAsButton";
+import { CircleX } from 'lucide-react';
 
 
 // Generic type for the list items
@@ -32,15 +32,10 @@ export function ExpandableWrapper<T extends Record<string, any>>({
     const [activeFilters, setActiveFilters] = useState<string[]>([]);
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
     const [selectedItem, setSelectedItem] = useState<T | null>(null);
-    const [indicatorStyle, setIndicatorStyle] = useState({
-        width: 0,
-        left: 0,
-        height: 0,
-        opacity: 0,
-    });
-    const [activeButtonElement, setActiveButtonElement] = useState<HTMLButtonElement | null>(null);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
+
+    console.log('list is', list);
 
     // Refs for animations
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -125,20 +120,26 @@ export function ExpandableWrapper<T extends Record<string, any>>({
         console.log("Close button clicked - switching back to grid view");
         
         setExpanded(false);
-        setIndicatorStyle({
-            width: 0,
-            left: 0,
-            height: 0,
-            opacity: 0,
-        });
     };
 
     // Handle filter change
     const handleFilterChange = (value: string) => {
+        let newFilters;
         if (activeFilters.includes(value)) {
-            setActiveFilters(activeFilters.filter(f => f !== value));
+            newFilters = activeFilters.filter(f => f !== value);
         } else {
-            setActiveFilters([...activeFilters, value]);
+            newFilters = [...activeFilters, value];
+        }
+        setActiveFilters(newFilters);
+        
+        if (selectedItem) {
+            // Deselect the item if it doesn't match the new filters
+            const itemMatchesFilter = newFilters.length === 0 || 
+                newFilters.includes(String(selectedItem[filterBy]));
+            
+            if (!itemMatchesFilter) {
+                setSelectedItem(null);
+            }
         }
     };
 
@@ -177,14 +178,6 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                 height: 'calc(100% - 60px)',
                 duration: 0.5,
             });
-            
-            // Reset indicator when collapsing
-            setIndicatorStyle({
-                width: 0,
-                left: 0,
-                height: 0,
-                opacity: 0,
-            });
         }
     }, [expanded]);
     
@@ -216,64 +209,49 @@ export function ExpandableWrapper<T extends Record<string, any>>({
             const firstItem = filteredList[0];
             setSelectedItem(firstItem);
             
-            // Wait for buttons to render before positioning indicator
+            // Wait for buttons to render before scrolling to selection
             setTimeout(() => {
                 if (smallerListRef.current) {
                     const firstItemId = getItemId(firstItem);
                     const firstButton = smallerListRef.current.querySelector(`button[data-item-id="${firstItemId}"]`) as HTMLButtonElement;
                     if (firstButton) {
-                        // Directly set values instead of using updateIndicator to avoid infinite loops
-                        const { offsetLeft, offsetWidth } = firstButton;
-                        setIndicatorStyle({
-                            left: offsetLeft,
-                            width: offsetWidth,
-                            height: 100,
-                            opacity: 1,
-                        });
-                        setActiveButtonElement(firstButton);
+                        scrollButtonIntoView(firstButton);
                     }
                 }
             }, 50);
         }
     }, [expanded, filteredList]);
 
-    // Update indicator when active button changes
-    const updateIndicator = (button: HTMLButtonElement) => {
-        if (!button) return;
+    // Handle scrolling to center the button
+    const scrollButtonIntoView = (button: HTMLButtonElement) => {
+        if (!button || !smallerListRef.current) return;
         
-        // Don't update if button is the same to prevent unnecessary rerenders
-        if (button === activeButtonElement) return;
-        
-        setActiveButtonElement(button);
+        // Calculate scroll position to center the button
+        const scrollContainer = smallerListRef.current;
+        const containerWidth = scrollContainer.clientWidth;
         const { offsetLeft, offsetWidth } = button;
-        setIndicatorStyle({
-            left: offsetLeft,
-            width: offsetWidth,
-            height: 100,
-            opacity: 1,
-        });
+        const buttonCenter = offsetLeft + (offsetWidth / 2);
+        const scrollCenter = scrollContainer.scrollLeft + (containerWidth / 2);
+        const scrollAdjustment = buttonCenter - scrollCenter;
         
-        // Scroll button into view
-        if (smallerListRef.current) {
-            // Calculate scroll position to center the button
-            const scrollContainer = smallerListRef.current;
-            const containerWidth = scrollContainer.clientWidth;
-            const buttonCenter = offsetLeft + (offsetWidth / 2);
-            const scrollCenter = scrollContainer.scrollLeft + (containerWidth / 2);
-            const scrollAdjustment = buttonCenter - scrollCenter;
-            
-            // Apply smooth scrolling
-            scrollContainer.scrollBy({
-                left: scrollAdjustment,
-                behavior: 'smooth'
-            });
-        }
+        // Apply smooth scrolling
+        scrollContainer.scrollBy({
+            left: scrollAdjustment,
+            behavior: 'smooth'
+        });
     };
 
-    // Handle button click animation
+    // Handle button click
     const handleButtonClick = (item: T, e: React.MouseEvent<HTMLButtonElement>) => {
         setSelectedItem(item);
-        updateIndicator(e.currentTarget);
+        scrollButtonIntoView(e.currentTarget);
+    };
+    
+    // Update the indicator - placeholder function to match the call in line 107
+    const updateIndicator = (button: HTMLButtonElement) => {
+        if (button) {
+            scrollButtonIntoView(button);
+        }
     };
 
     return (
@@ -286,7 +264,21 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                         className="pl-8 w-48 md:w-64"
                         placeholder={`Search by ${String(searchBy)}...`}
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e) => {
+                            const newSearchTerm = e.target.value;
+                            setSearchTerm(newSearchTerm);
+                            
+                            if (selectedItem && newSearchTerm.length > 0) {
+                                // Deselect the item if it doesn't match the search
+                                const itemMatchesSearch = String(selectedItem[searchBy])
+                                    .toLowerCase()
+                                    .includes(newSearchTerm.toLowerCase());
+                                    
+                                if (!itemMatchesSearch) {
+                                    setSelectedItem(null);
+                                }
+                            }
+                        }}
                     />
                 </div>
 
@@ -319,19 +311,7 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', minWidth: 0 }}
                         onScroll={checkScrollability}
                     >
-                        {/* Background indicator that animates - only show if we have a valid position */}
-                        {expanded && indicatorStyle.width > 0 && (
-                            <div 
-                                className="absolute bg-black rounded-sm shadow-md z-0 transition-all duration-300 ease-in-out"
-                                style={{
-                                    left: `${indicatorStyle.left}px`,
-                                    width: `${indicatorStyle.width}px`,
-                                    height: '100%',
-                                    opacity: indicatorStyle.opacity,
-                                    top: 0,
-                                }}
-                            />
-                        )}
+                        {/* Remove the animated background indicator completely */}
                         
                         {expanded && filteredList.map((item, index) => (
                             <Button
@@ -339,8 +319,10 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                                 variant={selectedItem === item ? "default" : "ghost"}
                                 size="sm"
                                 className={cn(
-                                    "mr-2 cursor-pointer relative z-10",
-                                    selectedItem === item ? "text-white" : "hover:text-white"
+                                    "mr-2 cursor-pointer relative z-10 transition-all",
+                                    selectedItem === item 
+                                        ? "bg-black text-white shadow-md" 
+                                        : "hover:text-white hover:bg-primary"
                                 )}
                                 onClick={(e) => handleButtonClick(item, e)}
                                 data-item-id={getItemId(item)}
@@ -375,7 +357,7 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                 <div className="flex items-center gap-2">
                     {filterValues.map((value) => {
                         return (
-                        <CheckBoxAsButton checked={activeFilters.includes(value)} checkedChange={() => handleFilterChange(value)} text={ value==="false" ? "Custom":"System"} value={value}/>
+                        <CheckBoxAsButton checked={activeFilters.includes(value)} checkedChange={() => handleFilterChange(value)} text={ value==="false" ? "Custom":"System"} value={value} key={value}/>
                     )})}
                 </div>
             </div>
@@ -387,15 +369,15 @@ export function ExpandableWrapper<T extends Record<string, any>>({
             >
                 {expanded ? (
                     <div className="relative h-full">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="absolute top-0 right-0 z-50 shadow-md hover:bg-primary hover:text-white" // Enhanced style for better visibility
-                            onClick={handleCloseDetails}
-                        >
-                            Close
-                        </Button>
-                        {selectedItem && <ListDetailedComponent item={selectedItem} />}
+                        <CircleX onClick={handleCloseDetails} className="cursor-pointer absolute z-100 top-0 right-0"/>
+                        {/* If selectedItem no longer exists in filteredList (like after role revert), 
+                          * go back to grid view to prevent "Role not found" errors */}
+                        {selectedItem && filteredList.some(item => getItemId(item) === getItemId(selectedItem)) ? 
+                          <ListDetailedComponent item={selectedItem} /> : 
+                          <div className="flex items-center justify-center h-full">
+                            <p className="text-center">Item no longer exists. <Button onClick={handleCloseDetails} variant="link">Return to list</Button></p>
+                          </div>
+                        }
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

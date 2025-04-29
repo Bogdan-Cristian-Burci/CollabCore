@@ -17,6 +17,8 @@ export default function RolesTab(){
         refetch
     } = useRoles();
 
+
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-full">
@@ -28,7 +30,7 @@ export default function RolesTab(){
     return(
         <ExpandableWrapper<Role>
             list={roles}
-            searchBy="name"
+            searchBy="display_name"
             filterBy="is_system_role"
             SimpleComponent={RoleSimpleCard}
             DetailedComponent={RoleDetailedCard}
