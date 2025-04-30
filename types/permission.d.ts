@@ -5,6 +5,7 @@ export interface Permission {
   description: string;
   category: string;
   is_active: boolean;
+  override_status?: 'granted' | 'denied' | 'inherited';
 }
 
 export interface PermissionsApiResponse {

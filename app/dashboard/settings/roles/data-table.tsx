@@ -39,7 +39,8 @@ export function DataTable<TData, TValue>({
 
     const [sorting,setSorting] = React.useState<SortingState>([]);
     const [columnFilters,setColumnFilters] = React.useState<ColumnFiltersState>([]);
-    const [expanded, setExpanded] = React.useState<ExpandedState>({});
+    // Use a more explicit type compatible with TanStack Table
+    const [expanded, setExpanded] = React.useState<{[key: string]: boolean}>({});
 
     const table = useReactTable({
         data,
@@ -50,12 +51,22 @@ export function DataTable<TData, TValue>({
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
-        onExpandedChange:setExpanded,
+        onExpandedChange: updater => {
+            // Convert the updater to work with our custom state type
+            if (typeof updater === 'function') {
+                setExpanded(prev => {
+                    const newState = updater(prev as any);
+                    return newState as {[key: string]: boolean};
+                });
+            } else {
+                setExpanded(updater as {[key: string]: boolean});
+            }
+        },
         getExpandedRowModel: getExpandedRowModel(),
         state:{
             sorting,
             columnFilters,
-            expanded
+            expanded: expanded as unknown as ExpandedState
         }
     })
 
@@ -102,18 +113,18 @@ export function DataTable<TData, TValue>({
                         table.getRowModel().rows.map((row) => (
                             <React.Fragment key={row.id}>
                                 <TableRow
-                                    className={expanded[row.id] ? "bg-gray-50" : ""}
+                                    className={expanded[row.id as string] ? "bg-gray-50" : ""}
                                     onClick={() => {
                                         setExpanded((prev) => ({
                                             ...prev,
-                                            [row.id]: !prev[row.id],
+                                            [row.id as string]: !prev[row.id as string],
                                         }));
                                     }}
                                     style={{ cursor: 'pointer' }}
                                     data-state={row.getIsSelected() && "selected"}
                                 >
                                     <TableCell className="w-10">
-                                        {renderExpandIcon(!!expanded[row.id])}
+                                        {renderExpandIcon(!!expanded[row.id as string])}
                                     </TableCell>
                                     {row.getVisibleCells().map((cell) => (
                                         <TableCell key={cell.id}>
@@ -121,7 +132,7 @@ export function DataTable<TData, TValue>({
                                         </TableCell>
                                     ))}
                                 </TableRow>
-                                {expanded[row.id] && (
+                                {expanded[row.id as string] && (
                                     <TableRow>
                                         <TableCell colSpan={row.getVisibleCells().length + 1} className="p-0">
                                             <div className="p-4 bg-gray-50">

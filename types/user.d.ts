@@ -1,5 +1,6 @@
 import {JWT} from "next-auth/jwt";
 import { OrganisationResource } from "@/types/organisation";
+import {UserRoleFormat} from "@/types/role";
 
 export interface UserRoleInOrganisation{
     id:number | null,
@@ -42,7 +43,7 @@ export interface UserResource{
     initials:string,
     created_at:string,
     updated_at:string,
-    roles:string[],
+    roles:UserRoleFormat[],
 
     permission_overrides:PermissionOverrides,
     organisation_id:number,

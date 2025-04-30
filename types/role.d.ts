@@ -4,8 +4,8 @@ export interface UserRoleFormat{
     display_name: string;
     description: string;
     level: number | null;
-    is_system_role: boolean;
-    permissions: RolePermission[];
+    is_system: boolean;
+    permissions?: RolePermission[];
 }
 export interface RolePermission {
   id: number;

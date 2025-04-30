@@ -12,7 +12,7 @@ interface PermissionAccordionProps {
     groupedPermissions: Record<string, Permission[]>;
     compareWith?: PermissionItem;
     isSaving?: boolean;
-    handlePermissionChange: (permissionId: number, isActive: boolean) => void;
+    handlePermissionChange: (permissionId: number, isActive: boolean | 'revert') => void;
     gridCols?: string;
     disabled?: boolean;
 }
@@ -25,6 +25,28 @@ const PermissionAccordion: React.FC<PermissionAccordionProps> = ({
     gridCols = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
     disabled = false
 }) => {
+    const getPermissionBadge = (overrideStatus?: string) => {
+        if (!overrideStatus || overrideStatus === 'inherited') return null;
+        
+        return (
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
+                overrideStatus === 'granted' 
+                    ? 'bg-green-100 text-green-800 border border-green-300' 
+                    : 'bg-red-100 text-red-800 border border-red-300'
+            }`}>
+                {overrideStatus === 'granted' ? 'Explicitly Granted' : 'Explicitly Denied'}
+            </span>
+        );
+    };
+
+    const getCardStyle = (overrideStatus?: string) => {
+        if (!overrideStatus || overrideStatus === 'inherited') return "";
+        
+        return overrideStatus === 'granted' 
+            ? "border-green-300 bg-green-50" 
+            : "border-red-300 bg-red-50";
+    };
+
     return (
         <Accordion type="single" collapsible className="w-full">
             {Object.entries(groupedPermissions).map(([category, permissions]) => (
@@ -38,26 +60,44 @@ const PermissionAccordion: React.FC<PermissionAccordionProps> = ({
                                 // Only check for changes if compareWith is provided
                                 const originalState = compareWith?.permissions?.find(p => p.id === permission.id);
                                 const hasChanged = compareWith ? permState?.is_active !== originalState?.is_active : false;
+                                
+                                // Get the visual styling based on override status
+                                const overrideStatus = (permission as any).override_status;
+                                const cardStyle = getCardStyle(overrideStatus);
+                                const badge = getPermissionBadge(overrideStatus);
 
                                 return (
                                     <div
                                         key={permission.id}
                                         className={`p-4 border rounded-md shadow-sm hover:shadow-md transition-shadow ${
-                                            hasChanged ? "border-blue-500 bg-blue-50" : ""
+                                            hasChanged ? "border-blue-500 bg-blue-50" : cardStyle
                                         }`}
                                     >
-                                        <h5 className="font-medium text-md">{permission.display_name}</h5>
-                                        <p className="text-sm text-muted-foreground">{permission.description}</p>
+                                        <div className="flex justify-between items-start">
+                                            <h5 className="font-medium text-md">{permission.display_name}</h5>
+                                            {badge}
+                                        </div>
+                                        <p className="text-sm text-muted-foreground mt-1">{permission.description}</p>
                                         <div className="flex items-center justify-between mt-2">
                                             <span className="text-sm font-medium">
                                                 {permState?.is_active ? "Enabled" : "Disabled"}
                                             </span>
-                                            <SwitchButton
-                                                className="cursor-pointer"
-                                                checked={permState?.is_active || false}
-                                                onChange={value => handlePermissionChange(permission.id, value)}
-                                                disabled={disabled || isSaving}
-                                            />
+                                            {overrideStatus === 'granted' || overrideStatus === 'denied' ? (
+                                                <button
+                                                    onClick={() => handlePermissionChange(permission.id, 'revert')}
+                                                    disabled={disabled || isSaving}
+                                                    className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded border border-gray-300 text-gray-700 font-medium transition-colors"
+                                                >
+                                                    Revert to Default
+                                                </button>
+                                            ) : (
+                                                <SwitchButton
+                                                    className="cursor-pointer"
+                                                    checked={permState?.is_active || false}
+                                                    onChange={value => handlePermissionChange(permission.id, value)}
+                                                    disabled={disabled || isSaving}
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 );

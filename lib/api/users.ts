@@ -444,6 +444,7 @@ export async function setUserPermissionOverride(
 // Delete user permission override
 export async function deleteUserPermissionOverride(userId: string, permissionId: string): Promise<boolean> {
     try {
+        // The backend expects the permission ID as a number, convert if necessary
         const response = await fetch(`/api/users/${userId}/permission-overrides/${permissionId}`, {
             method: 'DELETE',
             headers: {

@@ -1,15 +1,18 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import PermissionAccordion from "./PermissionAccordion";
 import { Permission } from "@/types/permission";
 import { useUserPermissions } from "@/lib/hooks/useUsers";
+import { setUserPermissionOverride, deleteUserPermissionOverride } from "@/lib/api/users";
+import { toast } from "sonner";
 
 interface UserPermissionsProps {
   userId: number;
 }
 
 const UserPermissions: React.FC<UserPermissionsProps> = ({ userId }) => {
+  const [isSaving, setIsSaving] = useState(false);
   // Use React Query hook to fetch user with permissions
-  const { data: user, isLoading, error } = useUserPermissions(userId);
+  const { data: user, isLoading, error, refetch } = useUserPermissions(userId);
   
   // Group permissions by category with memoization to avoid unnecessary recalculations
   const groupedPermissions = useMemo(() => {
@@ -33,14 +36,73 @@ const UserPermissions: React.FC<UserPermissionsProps> = ({ userId }) => {
       if (!acc[category]) {
         acc[category] = [];
       }
-      acc[category].push(permission);
+      
+      // Check if this permission is in the user's permission_overrides
+      const isGranted = user.permission_overrides?.grant?.includes(permission.name);
+      const isDenied = user.permission_overrides?.deny?.includes(permission.name);
+      
+      // Set active state based on overrides
+      const permissionWithOverride = {
+        ...permission,
+        is_active: isGranted ? true : (isDenied ? false : permission.is_active),
+        override_status: isGranted ? "granted" : (isDenied ? "denied" : "inherited") as "granted" | "denied" | "inherited"
+      };
+      
+      acc[category].push(permissionWithOverride);
       return acc;
     }, {});
   }, [user]);
 
-  const handlePermissionChange = (permissionId: number, isActive: boolean) => {
-    // This is a read-only view, so we're not implementing changes
-    console.log(`Permission ${permissionId} changed to ${isActive}`);
+  const handlePermissionChange = async (permissionId: number, isActiveOrRevert: boolean | 'revert') => {
+    if (!user) return;
+    
+    setIsSaving(true);
+    try {
+      // Find the permission by ID
+      let foundPermission: Permission | undefined;
+      for (const category in groupedPermissions) {
+        foundPermission = groupedPermissions[category].find(p => p.id === permissionId);
+        if (foundPermission) break;
+      }
+      
+      if (!foundPermission) {
+        toast.error("Permission not found");
+        return;
+      }
+      
+      // Handle revert action
+      if (isActiveOrRevert === 'revert') {
+        const success = await deleteUserPermissionOverride(user.id.toString(), foundPermission.id.toString());
+        
+        if (success) {
+          toast.success(`Permission reverted to default successfully`);
+          // Refresh the user data to get updated permissions
+          refetch();
+        } else {
+          toast.error(`Failed to revert permission to default`);
+        }
+      } else {
+        // For both granting and denying, we use the same endpoint but with different type
+        const isActive = isActiveOrRevert as boolean;
+        const success = await setUserPermissionOverride(user.id.toString(), {
+          permission: foundPermission.name,
+          type: isActive ? "grant" : "deny"
+        });
+        
+        if (success) {
+          toast.success(`Permission ${isActive ? 'granted' : 'denied'} successfully`);
+          // Refresh the user data to get updated permissions
+          refetch();
+        } else {
+          toast.error(`Failed to ${isActive ? 'grant' : 'deny'} permission`);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating permission:", error);
+      toast.error("Error updating permission");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoading) {
@@ -77,7 +139,8 @@ const UserPermissions: React.FC<UserPermissionsProps> = ({ userId }) => {
       <PermissionAccordion 
         groupedPermissions={groupedPermissions}
         handlePermissionChange={handlePermissionChange}
-        disabled={true} // Read-only view
+        disabled={false} // Enable controls
+        isSaving={isSaving}
         gridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
       />
     </div>

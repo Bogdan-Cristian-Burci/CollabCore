@@ -43,7 +43,15 @@ export const RoleDetailedListCard : React.FC<{item:Role}> = ({item}) => {
     }, {} as Record<string, Permission[]>);
 
 
-    const handlePermissionChange = useCallback((permissionId: number, isActive: boolean) => {
+    const handlePermissionChange = useCallback((permissionId: number, isActiveOrRevert: boolean | 'revert') => {
+        // Support for 'revert' was added to match the PermissionAccordion interface
+        // However, role permissions don't have individual overrides, so we only handle boolean values
+        if (isActiveOrRevert === 'revert') {
+            console.warn('Revert action is not applicable for role permissions');
+            return;
+        }
+        
+        const isActive = isActiveOrRevert as boolean;
         console.log(`Permission change: ${permissionId} => ${isActive ? 'active' : 'inactive'}`);
         
         setPermissions(prev => {
