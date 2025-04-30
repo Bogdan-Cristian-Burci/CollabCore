@@ -16,7 +16,6 @@ export default function RolesPermissionsPage(){
         <div className="flex flex-col gap-4 w-full h-full">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold">Roles & Permissions Management</h2>
-                <AnimatedButton icon={PlusIcon} text="Add Role" variant="outline" size="sm" className="hidden lg:inline"/>
             </div>
             <div className="flex w-full h-full">
                 <Tabs 

@@ -220,7 +220,7 @@ export default function PermissionsTab() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">My Permissions</h2>
-                <CardDescription>Manage your permissions in {user?.organisation?.name}</CardDescription>
+                <CardDescription>View your permissions in {user?.organisation?.name}</CardDescription>
               </div>
               <Shield className="h-8 w-8 text-primary" />
             </div>
@@ -238,14 +238,14 @@ export default function PermissionsTab() {
               </div>
             </div>
 
-            <ScrollArea className="h-[calc(100vh-18rem)]">
+            <ScrollArea className="h-[calc(100vh-18rem)] px-10">
               {Object.keys(groupedPermissions).length > 0 ? (
                 <UserPermissionAccordion 
                   groupedPermissions={groupedPermissions}
                   handlePermissionChange={handlePermissionChange}
                   disabled={false}
                   isSaving={isSaving}
-                  gridCols="grid-cols-1 sm:grid-cols-2"
+                  gridCols="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
                 />
               ) : isLoading ? (
                 <div className="flex flex-col items-center justify-center p-10">
