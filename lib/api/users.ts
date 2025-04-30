@@ -89,45 +89,10 @@ export async function fetchUserProfile(): Promise<UserResource | null> {
                 return data.data;
             }
         }
-        
-        // Fallback to mock data if no valid format is found
-        return {
-            id: 999,
-            name: "Mock User",
-            email: "mock@example.com",
-            email_verified_at: new Date().toISOString(),
-            initials: "MU",
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            roles: ["user"],
-            permissions: ["read"],
-            permission_overrides: {
-                grant: [],
-                deny: []
-            },
-            organisation_id: 1,
-            organisation: {
-                id: 1,
-                name: "Mock Organization",
-                slug: "mock-org",
-                is_active: true
-            },
-            can: {
-                update: true,
-                delete: false,
-                manage_roles: false
-            },
-            links: {
-                self: "/api/users/999",
-                teams: "/api/users/999/teams",
-                projects: "/api/users/999/projects",
-                members: "/api/users/999/members"
-            }
-        };
     } catch (error) {
         console.error('Error fetching user profile:', error);
-        return null;
     }
+    return null;
 }
 
 // Add a new user

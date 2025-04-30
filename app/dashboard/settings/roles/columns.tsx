@@ -23,7 +23,7 @@ export const columns: ColumnDef<UserResource>[] = [
                 return (
                     <div className="flex flex-wrap gap-2">
                         <span className="bg-gray-200 text-gray-800 px-2 py-1 rounded">
-                            {typeof roles === 'object' ? 'Complex Role' : (roles || 'No Role')}
+                            {typeof roles === 'object' ? 'Complex Role' : String(roles || 'No Role')}
                         </span>
                     </div>
                 );
