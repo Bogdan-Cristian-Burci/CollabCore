@@ -31,8 +31,8 @@ const UserPermissionAccordion: React.FC<UserPermissionAccordionProps> = ({
         return (
             <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
                 overrideStatus === 'granted' 
-                    ? 'bg-green-100 text-green-800 border border-green-300' 
-                    : 'bg-red-100 text-red-800 border border-red-300'
+                    ? 'bg-primary/10 text-primary border border-primary/20' 
+                    : 'bg-destructive/10 text-destructive border border-destructive/20'
             }`}>
                 {overrideStatus === 'granted' ? 'Explicitly Granted' : 'Explicitly Denied'}
             </span>
@@ -43,8 +43,8 @@ const UserPermissionAccordion: React.FC<UserPermissionAccordionProps> = ({
         if (!overrideStatus || overrideStatus === 'inherited') return "";
         
         return overrideStatus === 'granted' 
-            ? "border-green-300 bg-green-50" 
-            : "border-red-300 bg-red-50";
+            ? "border-primary/20 bg-primary/5" 
+            : "border-destructive/20 bg-destructive/5";
     };
 
     return (
@@ -70,7 +70,7 @@ const UserPermissionAccordion: React.FC<UserPermissionAccordionProps> = ({
                                     <div
                                         key={permission.id}
                                         className={`p-4 border rounded-md shadow-sm hover:shadow-md transition-shadow ${
-                                            hasChanged ? "border-blue-500 bg-blue-50" : cardStyle
+                                            hasChanged ? "border-secondary/50 bg-secondary/10" : cardStyle
                                         }`}
                                     >
                                         <div className="flex justify-between items-start">
@@ -93,7 +93,7 @@ const UserPermissionAccordion: React.FC<UserPermissionAccordionProps> = ({
                                                 <button
                                                     onClick={() => handlePermissionChange(permission.id, 'request')}
                                                     disabled={disabled || isSaving}
-                                                    className="text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 rounded border border-blue-300 text-blue-700 font-medium transition-colors"
+                                                    className="text-xs px-2 py-1 bg-accent hover:bg-accent/80 rounded border border-border text-accent-foreground font-medium transition-colors"
                                                 >
                                                     Request Access
                                                 </button>

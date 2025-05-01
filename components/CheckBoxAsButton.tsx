@@ -23,8 +23,8 @@ export default function CheckBoxAsButton({text,value, checked, checkedChange}: C
             />
             <label htmlFor={id}
                    className={cn(
-                     "inline-flex items-center justify-between w-full p-1 border-2 border-gray-200 rounded-sm cursor-pointer",
-                     checked ? "bg-black text-white" : "bg-white text-black"
+                     "inline-flex items-center justify-between w-full p-1 border-2 border-border rounded-sm cursor-pointer",
+                     checked ? "bg-primary text-primary-foreground" : "bg-background text-foreground"
                    )}>
                 <div className="block">
                     <div className="w-full text-sm">{text}</div>

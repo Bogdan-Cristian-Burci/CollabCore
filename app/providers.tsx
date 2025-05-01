@@ -5,6 +5,7 @@ import { SessionProvider } from "next-auth/react";
 import { ReactNode, createContext, useContext, useState, useEffect } from "react";
 import { Session } from "next-auth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {ThemeProvider} from "@/components/ThemeProvider";
 
 // Create CSRF token context
 export const CSRFContext = createContext<string>("");
@@ -55,13 +56,19 @@ export function Providers({ children, csrfToken = "", initialSession = null }: P
   }, []);
   
   return (
-    <QueryClientProvider client={queryClient}>
-      <SessionProvider session={initialSession}>
-        <CSRFContext.Provider value={token}>
-          {children}
-          <ToasterProvider/>
-        </CSRFContext.Provider>
-      </SessionProvider>
-    </QueryClientProvider>
+      <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange >
+        <QueryClientProvider client={queryClient}>
+          <SessionProvider session={initialSession}>
+            <CSRFContext.Provider value={token}>
+              {children}
+              <ToasterProvider/>
+            </CSRFContext.Provider>
+          </SessionProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
   );
 }

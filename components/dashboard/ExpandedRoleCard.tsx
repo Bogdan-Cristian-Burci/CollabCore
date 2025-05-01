@@ -137,14 +137,14 @@ export default function ExpandedRoleCard({
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="h-8 w-8 p-0 text-green-500 hover:text-green-700 hover:bg-green-100"
+                          className="h-8 w-8 p-0 text-primary hover:text-primary/80 hover:bg-primary/10"
                         >
                           <Check className="h-4 w-4" />
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline" 
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-100"
+                          className="h-8 w-8 p-0 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                         >
                           <XIcon className="h-4 w-4" />
                         </Button>
