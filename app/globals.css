@@ -112,6 +112,63 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+.modern{
+  --background: oklch(1 0 0); /* Pure white background */
+  --foreground: oklch(0.1 0 0); /* Very dark gray for text (near black) */
+
+  --card: oklch(0.98 0 0); /* Subtle off-white for cards */
+  --card-foreground: oklch(0.1 0 0); /* Dark text on cards */
+
+  --popover: oklch(0.98 0 0); /* Match card */
+  --popover-foreground: oklch(0.1 0 0); /* Match card foreground */
+
+  /* --- Primary Accent --- */
+  --primary: oklch(0.488 0.243 264.376); /* Vibrant Purple (catchy accent) */
+  --primary-foreground: oklch(0.985 0 0); /* Light text/icons on primary */
+
+  /* --- Secondary Elements --- */
+  --secondary: oklch(0.94 0 0); /* Light gray for secondary buttons, backgrounds */
+  --secondary-foreground: oklch(0.2 0 0); /* Darker gray text on secondary */
+
+  /* --- Muted Elements --- */
+  --muted: oklch(0.94 0 0); /* Match secondary for subtle backgrounds */
+  --muted-foreground: oklch(0.45 0 0); /* Mid-gray for less important text */
+
+  /* --- Hover/Active States --- */
+  --accent: oklch(0.94 0 0); /* Match secondary for subtle hover/accent backgrounds */
+  --accent-foreground: oklch(0.1 0 0); /* Dark text on accent */
+
+  /* --- Destructive Actions --- */
+  --destructive: oklch(0.6 0.22 25); /* Clear, saturated red */
+  --destructive-foreground: oklch(0.985 0 0); /* Light text/icons on destructive */
+
+  /* --- Borders & Inputs --- */
+  --border: oklch(0.1 0 0 / 10%); /* Subtle dark border (foreground color at low opacity) */
+  --input: oklch(0.1 0 0 / 15%); /* Slightly more visible dark border for inputs */
+
+  /* --- Focus Rings --- */
+  --ring: oklch(0.488 0.243 264.376 / 60%); /* Primary color at reduced opacity for focus */
+  /* Alternatively, use a solid color: oklch(0.488 0.243 264.376) */
+
+  /* --- Chart Colors (kept vibrant from dark theme) --- */
+  --chart-1: oklch(0.488 0.243 264.376); /* Purple (Same as Primary) */
+  --chart-2: oklch(0.696 0.17 162.48); /* Teal */
+  --chart-3: oklch(0.769 0.188 70.08); /* Yellow/Green */
+  --chart-4: oklch(0.627 0.265 303.9); /* Magenta */
+  --chart-5: oklch(0.645 0.246 16.439); /* Orange */
+
+  /* --- Sidebar Specific (optional - often inherit from card/popover) --- */
+  /* If you need distinct sidebar styling, otherwise remove/comment out */
+  --sidebar: oklch(0.98 0 0); /* Match card */
+  --sidebar-foreground: oklch(0.1 0 0); /* Match card foreground */
+  --sidebar-primary: oklch(0.488 0.243 264.376); /* Match main primary */
+  --sidebar-primary-foreground: oklch(0.985 0 0); /* Match main primary foreground */
+  --sidebar-accent: oklch(0.94 0 0); /* Match main accent */
+  --sidebar-accent-foreground: oklch(0.1 0 0); /* Match main accent foreground */
+  --sidebar-border: oklch(0.1 0 0 / 10%); /* Match main border */
+  --sidebar-ring: oklch(0.488 0.243 264.376 / 60%); /* Match main ring */
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

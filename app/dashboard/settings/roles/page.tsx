@@ -28,21 +28,21 @@ export default function RolesPermissionsPage(){
                     <AnimatedTabsList className="flex -flex-start rounded-sm !p-1" activeTabValue={activeTab}>
                         <TabsTrigger 
                             value="roles" 
-                            className="rounded-sm cursor-pointer z-10 bg-transparent text-black data-[state=active]:text-white data-[state=active]:bg-transparent relative py-2 px-4"
+                            className="rounded-sm cursor-pointer z-10 bg-transparent text-[var(--foreground)] data-[state=active]:text-[var(--primary-foreground)] data-[state=active]:bg-transparent relative py-2 px-4"
                         >
-                            Roles
+                            Available Roles
                         </TabsTrigger>
                         <TabsTrigger 
                             value="permissions" 
-                            className="rounded-sm cursor-pointer z-10 bg-transparent text-black data-[state=active]:text-white data-[state=active]:bg-transparent relative py-2 px-4"
+                            className="rounded-sm cursor-pointer z-10 bg-transparent text-[var(--foreground)] data-[state=active]:text-[var(--primary-foreground)] data-[state=active]:bg-transparent relative py-2 px-4"
                         >
-                            Permissions Catalog
+                            Own Permissions
                         </TabsTrigger>
                         <TabsTrigger 
                             value="overrides" 
-                            className="rounded-sm cursor-pointer z-10 bg-transparent text-black data-[state=active]:text-white data-[state=active]:bg-transparent relative py-2 px-4"
+                            className="rounded-sm cursor-pointer z-10 bg-transparent text-[var(--foreground)] data-[state=active]:text-[var(--primary-foreground)] data-[state=active]:bg-transparent relative py-2 px-4"
                         >
-                            User Permission Overrides
+                            Users Roles and Permissions
                         </TabsTrigger>
                     </AnimatedTabsList>
                     <TabsContent value="roles">

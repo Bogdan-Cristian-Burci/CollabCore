@@ -60,7 +60,9 @@ export function Providers({ children, csrfToken = "", initialSession = null }: P
           attribute="class"
           defaultTheme="system"
           enableSystem
-          disableTransitionOnChange >
+          disableTransitionOnChange
+          themes={["light", "dark","modern","system"]}
+      >
         <QueryClientProvider client={queryClient}>
           <SessionProvider session={initialSession}>
             <CSRFContext.Provider value={token}>

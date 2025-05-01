@@ -86,7 +86,7 @@ const PermissionAccordion: React.FC<PermissionAccordionProps> = ({
                                                 <button
                                                     onClick={() => handlePermissionChange(permission.id, 'revert')}
                                                     disabled={disabled || isSaving}
-                                                    className="text-xs px-2 py-1 bg-muted hover:bg-muted/80 rounded border border-border text-muted-foreground font-medium transition-colors"
+                                                    className="text-xs px-2 py-1 bg-muted hover:bg-muted/80 rounded border border-border text-muted-foreground font-medium transition-colors cursor-pointer"
                                                 >
                                                     Revert to Default
                                                 </button>

@@ -2,15 +2,15 @@
 
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Tabs as BaseTabs, TabsList as BaseTabsList, TabsTrigger as BaseTabsTrigger, TabsContent as BaseTabsContent } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { useEffect, useRef, useState } from "react"
 
-interface AnimatedTabsListProps extends React.ComponentProps<typeof TabsList> {
+interface AnimatedTabsListProps extends React.ComponentProps<typeof BaseTabsList> {
   activeTabValue?: string
 }
 
-export  function AnimatedTabsList({
+export function AnimatedTabsList({
   children,
   className,
   activeTabValue,
@@ -63,25 +63,45 @@ export  function AnimatedTabsList({
   }
   
   return (
-    <TabsList 
+    <BaseTabsList 
       ref={listRef} 
-      className={cn("relative bg-gray-100 p-0", className)} 
+      className={cn("relative bg-[var(--background)] p-0", className)}
       onClick={handleTabsChange}
       {...props}
     >
       <div 
-        className="absolute bg-black rounded-sm shadow-md z-0 transition-all duration-300 ease-in-out"
+        className="absolute bg-[var(--primary)] rounded-sm shadow-md z-0 transition-all duration-300 ease-in-out"
         style={{
           left: `${indicatorStyle.left}px`,
           width: `${indicatorStyle.width}px`,
-          height: '100%',
+          height: '80%',
           opacity: indicatorStyle.opacity,
-          top: 0,
+          top: 4,
         }}
       />
       {children}
-    </TabsList>
+    </BaseTabsList>
   )
 }
+
+// Custom TabsTrigger that overrides dark mode styles
+function TabsTrigger({
+  className,
+  ...props
+}: React.ComponentProps<typeof BaseTabsTrigger>) {
+  return (
+    <BaseTabsTrigger
+      className={cn(
+        // Override dark mode text color with !important to increase specificity
+        "dark:data-[state=active]:!text-[var(--primary-foreground)]", 
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+const Tabs = BaseTabs;
+const TabsContent = BaseTabsContent;
 
 export { Tabs, TabsContent, TabsTrigger }

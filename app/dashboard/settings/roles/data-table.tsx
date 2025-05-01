@@ -113,7 +113,7 @@ export function DataTable<TData, TValue>({
                         table.getRowModel().rows.map((row) => (
                             <React.Fragment key={row.id}>
                                 <TableRow
-                                    className={expanded[row.id as string] ? "bg-gray-50" : ""}
+                                    className={expanded[row.id as string] ? "bg-[var(--table-row-background)]" : ""}
                                     onClick={() => {
                                         setExpanded((prev) => ({
                                             ...prev,
@@ -135,7 +135,7 @@ export function DataTable<TData, TValue>({
                                 {expanded[row.id as string] && (
                                     <TableRow>
                                         <TableCell colSpan={row.getVisibleCells().length + 1} className="p-0">
-                                            <div className="p-4 bg-gray-50">
+                                            <div className="p-4 bg-[var(--table-row-background)]">
                                                 {renderSubComponent ? (
                                                     renderSubComponent({ row })
                                                 ) : (
