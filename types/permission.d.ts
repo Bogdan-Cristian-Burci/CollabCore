@@ -3,11 +3,12 @@ export interface Permission {
   name: string;
   display_name: string;
   description: string;
-  category: string;
-  is_active: boolean;
+  category?: string;
+  action?: string;
+  is_active?: boolean;
   override_status?: 'granted' | 'denied' | 'inherited';
 }
 
 export interface PermissionsApiResponse {
-  permissions: Permission[];
+  permissions: Record<string, Permission[]> | Permission[];
 }

@@ -2,6 +2,7 @@ import { Permission } from '@/types/permission';
 import permissionsApi from '@/lib/api/permissions';
 import { createQueryKeys } from '@/lib/api-factory';
 import { createResourceHooks } from '@/lib/query-hooks';
+import { useQuery } from '@tanstack/react-query';
 
 // Create standardized query keys for permissions
 export const permissionKeys = createQueryKeys('permissions');
@@ -21,14 +22,18 @@ const permissionHooks = createResourceHooks<Permission>(
  */
 export function usePermissions() {
   const { 
-    data = [], 
+    data, 
     isLoading, 
     error, 
     refetch 
-  } = permissionHooks.useGetAll();
+  } = useQuery({
+    queryKey: permissionKeys.all,
+    queryFn: permissionsApi.getAll,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   return {
-    permissions: data,
+    data,
     isLoading,
     error,
     refetch

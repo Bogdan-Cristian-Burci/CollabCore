@@ -30,8 +30,7 @@ export default function RolesTab(){
     }
 
     return(
-        <div className="w-full h-full relative">
-            <AnimatedButton icon={PlusIcon}  size="icon" className="flex justify-center absolute bottom-10 right-4 rounded-full"/>
+        <div className="w-full h-full">
             <ExpandableWrapper<Role>
                 list={roles}
                 searchBy="display_name"

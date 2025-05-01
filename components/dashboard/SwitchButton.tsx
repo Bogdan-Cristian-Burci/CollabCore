@@ -63,19 +63,27 @@ export default function SwitchButton({
         }
     };
 
+    // Stop event propagation to prevent parent triggers (like accordion toggle)
+    const handleClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
     return (
-        <Switch
-            id={switchId}
-            checked={isChecked}
-            onCheckedChange={handleChange}
-            disabled={disabled}
-            aria-label={label}
-            className={cn(
-                "transition-colors duration-200 ease-in-out",
-                isChecked ? activeClassName : inactiveClassName,
-                disabled && "opacity-50 cursor-not-allowed",
-                className
-            )}
-        />
+        <div onClick={handleClick}>
+            <Switch
+                id={switchId}
+                checked={isChecked}
+                onCheckedChange={handleChange}
+                disabled={disabled}
+                aria-label={label}
+                className={cn(
+                    "transition-colors duration-200 ease-in-out",
+                    isChecked ? activeClassName : inactiveClassName,
+                    disabled && "opacity-50 cursor-not-allowed",
+                    className
+                )}
+            />
+        </div>
     );
 }
