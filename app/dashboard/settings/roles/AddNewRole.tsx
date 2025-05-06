@@ -28,6 +28,7 @@ import PermissionAccordion from "@/components/dashboard/PermissionAccordion"
 import { Permission } from "@/types/permission"
 import { Slider } from "@/components/ui/slider"
 import { createRole } from "@/lib/api/roles"
+import { usePermissionSelectionStore } from "@/app/store/permissionSelectionStore"
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -58,9 +59,17 @@ export default function AddNewRole({
                                        buttonText = "Add new role"
                                    }: AddNewRoleProps) {
     const [open, setOpen] = useState(false)
-    const [selectedPermissions, setSelectedPermissions] = useState<Permission[]>([])
-    const { data: availablePermissions = [], isLoading: permissionsLoading } = usePermissions()
     const [isSaving, setIsSaving] = useState(false)
+    const { data: availablePermissions = [], isLoading: permissionsLoading } = usePermissions()
+    
+    // Use the zustand store for permission selection and accordion state
+    const { 
+        selectedPermissions,
+        setSelectedPermissions,
+        addPermission,
+        removePermission,
+        clearStore
+    } = usePermissionSelectionStore()
     
     // Wizard state
     const [currentStep, setCurrentStep] = useState<WizardStep>('roleDetails')
@@ -107,7 +116,7 @@ export default function AddNewRole({
         }, {} as Record<string, Permission[]>);
     }, [availablePermissions, selectedPermissions]);
 
-    // Handle permission toggle
+    // Handle permission toggle using the zustand store
     const handlePermissionChange = (permissionId: number, isActive: boolean | 'revert') => {
         if (isActive === 'revert') return;
 
@@ -116,30 +125,23 @@ export default function AddNewRole({
         
         if (!permissionToToggle) return;
         
-        setSelectedPermissions(prev => {
-            // Check if permission is already in the array
-            const isAlreadySelected = prev.some(p => p.id === permissionId);
-            
-            if (isActive && !isAlreadySelected) {
-                // Add to selected permissions
-                return [...prev, { ...permissionToToggle, is_active: true }];
-            } else if (!isActive && isAlreadySelected) {
-                // Remove from selected permissions
-                return prev.filter(p => p.id !== permissionId);
-            }
-            
-            return prev;
-        });
+        if (isActive) {
+            // Add to selected permissions
+            addPermission({ ...permissionToToggle, is_active: true });
+        } else {
+            // Remove from selected permissions
+            removePermission(permissionId);
+        }
     };
 
     // Reset form and state when drawer closes
     useEffect(() => {
         if (!open) {
             form.reset();
-            setSelectedPermissions([]);
+            clearStore(); // Clear zustand store instead of local state
             setCurrentStep('roleDetails');
         }
-    }, [open, form]);
+    }, [open, form, clearStore]);
 
     // Move to the next step
     const nextStep = () => {
@@ -188,7 +190,7 @@ export default function AddNewRole({
             // Close drawer and reset form
             setOpen(false);
             form.reset();
-            setSelectedPermissions([]);
+            clearStore(); // Clear zustand store instead of local state
             setCurrentStep('roleDetails');
 
             // Notify parent component
@@ -389,7 +391,7 @@ export default function AddNewRole({
             case 'permissions':
                 return "Step 2: Select Permissions";
             case 'summary':
-                return "Step 3: Review and Create";
+                return "Step 3: Review and Submit";
             default:
                 return "Create New Role";
         }
@@ -403,7 +405,7 @@ export default function AddNewRole({
             case 'permissions':
                 return "Select the permissions to assign to this role.";
             case 'summary':
-                return "Review your selections before creating the role.";
+                return "Review your selections and submit to create the role.";
             default:
                 return "Add a new role to the system.";
         }
@@ -419,7 +421,7 @@ export default function AddNewRole({
             case 'permissions':
                 return "Continue to Review";
             case 'summary':
-                return "Create Role";
+                return "Submit";
             default:
                 return "Next";
         }
@@ -479,7 +481,7 @@ export default function AddNewRole({
                     </DrawerHeader>
                     
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)}>
+                        <form>
                             <div 
                                 ref={contentRef}
                                 className="px-4 py-4 overflow-y-auto max-h-[calc(90vh-220px)]"
@@ -512,10 +514,10 @@ export default function AddNewRole({
                                     </div>
                                     
                                     <Button
-                                        type={currentStep === 'summary' ? 'submit' : 'button'}
-                                        onClick={currentStep !== 'summary' ? handleNext : undefined}
+                                        type="button"
+                                        onClick={currentStep === 'summary' ? form.handleSubmit(onSubmit) : handleNext}
                                         className="flex items-center"
-                                        disabled={isSaving}
+                                        disabled={isSaving || (currentStep === 'permissions' && selectedPermissions.length === 0)}
                                     >
                                         {isSaving ? (
                                             <>

@@ -4,9 +4,7 @@ import React, {useCallback, useEffect} from "react";
 import {Role} from "@/types/role";
 import {Permission} from "@/types/permission";
 import PermissionAccordion from "@/components/dashboard/PermissionAccordion";
-import {useRolePermissions, useRole, useRoles} from "@/lib/hooks/useRoles";
-import {AnimatedButton} from "@/components/dashboard/AnimatedButton";
-import {RotateCcw} from "lucide-react";
+import {useRolePermissions, useRoles} from "@/lib/hooks/useRoles";
 import {Button} from "@/components/ui/button";
 
 
@@ -16,13 +14,9 @@ export const RoleDetailedListCard : React.FC<{item:Role}> = ({item}) => {
     const [permissions, setPermissions] = React.useState<Permission[]>([...item.permissions]);
     const [hasChanges, setHasChanges] = React.useState(false);
     const [isSaving, setIsSaving] = React.useState(false);
-    const [isReverting, setIsReverting] = React.useState(false);
     
     // Get role permissions hook functions
     const { updatePermissions, removePermissions, refetch: refetchPermissions } = useRolePermissions(item.id);
-    
-    // Get role hooks for revert functionality
-    const { revertToDefault, refetch: refetchRole } = useRole(item.id);
     
     // Get global roles refetch function
     const { refetch: refetchAllRoles } = useRoles();
@@ -129,7 +123,6 @@ export const RoleDetailedListCard : React.FC<{item:Role}> = ({item}) => {
 
             // Refresh data to show current permissions state
             await Promise.all([
-                refetchRole(),
                 refetchPermissions(),
                 refetchAllRoles()
             ]);
@@ -146,23 +139,6 @@ export const RoleDetailedListCard : React.FC<{item:Role}> = ({item}) => {
     const cancelChanges = () => {
         setPermissions([...item.permissions]);
         setHasChanges(false);
-    };
-    
-    // Revert role to system default
-    const handleRevert = async () => {
-        if (window.confirm("Are you sure you want to revert this role to system defaults? All custom permission settings will be lost.")) {
-            try {
-                setIsReverting(true);
-                await revertToDefault();
-                // Refresh all roles data after revert
-                await refetchAllRoles();
-                // Reset state since the component may not unmount immediately
-                setIsReverting(false);
-            } catch (error) {
-                console.error("Error reverting role:", error);
-                setIsReverting(false);
-            }
-        }
     };
 
     return(
@@ -208,22 +184,9 @@ export const RoleDetailedListCard : React.FC<{item:Role}> = ({item}) => {
                 </div>
             )}
 
-            <div className="mb-6 flex justify-between items-start">
-                <div>
-                    <h3 className="text-lg font-semibold">{item.display_name}</h3>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
-                </div>
-                
-                {/* Show revert button for custom roles that override system templates */}
-                {item.overrides_system && (
-                    <AnimatedButton
-                        onClick={handleRevert}
-                        disabled={isReverting || isSaving}
-                        text={ isReverting ? "Reverting..." : "Reset to Default" }
-                        icon={RotateCcw}
-                    >
-                    </AnimatedButton>
-                )}
+            <div className="mb-6">
+                <h3 className="text-lg font-semibold">{item.display_name}</h3>
+                <p className="text-sm text-muted-foreground">{item.description}</p>
             </div>
             <PermissionAccordion 
                 groupedPermissions={groupedPermissions}

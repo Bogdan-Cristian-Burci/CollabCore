@@ -3,21 +3,28 @@
 import {PlusIcon} from "lucide-react";
 import {Tabs, TabsContent, TabsTrigger, AnimatedTabsList} from "@/components/dashboard/AnimatedTabs";
 import OverridesTab from "./OverridesTab";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {AnimatedButton} from "@/components/dashboard/AnimatedButton";
 import RolesTab from "@/app/dashboard/settings/roles/RolesTab";
 import PermissionsTab from "@/app/dashboard/settings/roles/PermissionsTab";
 import AddNewRole from "@/app/dashboard/settings/roles/AddNewRole";
+import { useRoles } from "@/lib/hooks/useRoles";
 
 export default function RolesPermissionsPage(){
 
     const [activeTab, setActiveTab] = useState("roles");
+    const { refetch } = useRoles();
+    
+    // Handler for role creation success
+    const handleRoleCreated = () => {
+        refetch();
+    };
     
     return (
         <div className="flex flex-col gap-4 w-full h-full">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold">Roles & Permissions Management</h2>
-                <AddNewRole/>
+                <AddNewRole onRoleCreated={handleRoleCreated}/>
                 {/*<AnimatedButton icon={PlusIcon} text="Add new role"  size="default" className="flex justify-center  rounded-full"/>*/}
             </div>
             <div className="flex w-full h-full">

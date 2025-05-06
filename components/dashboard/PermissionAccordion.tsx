@@ -1,7 +1,8 @@
-import React, { memo, useState, useEffect, useCallback } from "react";
+import React, { memo, useEffect, useCallback, useState } from "react";
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
-import SwitchButton from "@/components/dashboard/SwitchButton";
+import PermissionCard from "@/components/dashboard/PermissionCard";
 import { Permission } from "@/types/permission";
+import { usePermissionSelectionStore } from "@/app/store/permissionSelectionStore";
 
 export interface PermissionItem {
     id: number;
@@ -17,102 +18,6 @@ interface PermissionAccordionProps {
     disabled?: boolean;
 }
 
-// Memoized permission card component to reduce rerenders
-const PermissionCard = memo(({
-    permission,
-    hasChanged,
-    overrideStatus,
-    handlePermissionChange,
-    disabled,
-    isSaving
-}: {
-    permission: Permission;
-    hasChanged: boolean;
-    overrideStatus?: string;
-    handlePermissionChange: (permissionId: number, isActive: boolean | 'revert') => void;
-    disabled?: boolean;
-    isSaving?: boolean;
-}) => {
-    const cardStyle = getCardStyle(overrideStatus);
-    const badge = getPermissionBadge(overrideStatus);
-
-    // Handle toggle with stopping event propagation
-    const handleToggle = (value: boolean) => {
-        handlePermissionChange(permission.id, value);
-    };
-
-    const handleButtonClick = (e: React.MouseEvent) => {
-        // Stop event propagation to prevent accordion from toggling
-        e.stopPropagation();
-    };
-
-    return (
-        <div
-            className={`p-4 border rounded-md shadow-sm hover:shadow-md transition-shadow ${
-                hasChanged ? "border-secondary/50 bg-secondary/10" : cardStyle
-            }`}
-        >
-            <div className="flex justify-between items-start">
-                <h5 className="font-medium text-md">{permission.display_name}</h5>
-                {badge}
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">{permission.description}</p>
-            <div className="flex items-center justify-between mt-2">
-                <span className="text-sm font-medium">
-                    {permission.is_active ? "Enabled" : "Disabled"}
-                </span>
-                {overrideStatus === 'granted' || overrideStatus === 'denied' ? (
-                    <button
-                        onClick={(e) => {
-                            handleButtonClick(e);
-                            handlePermissionChange(permission.id, 'revert');
-                        }}
-                        disabled={disabled || isSaving}
-                        className="text-xs px-2 py-1 bg-muted hover:bg-muted/80 rounded border border-border text-muted-foreground font-medium transition-colors cursor-pointer"
-                    >
-                        Revert to Default
-                    </button>
-                ) : (
-                    <div onClick={handleButtonClick}>
-                        <SwitchButton
-                            className="cursor-pointer"
-                            checked={permission.is_active || false}
-                            onChange={handleToggle}
-                            disabled={disabled || isSaving}
-                        />
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-});
-
-PermissionCard.displayName = "PermissionCard";
-
-// Helper function to get badge for permission override status
-const getPermissionBadge = (overrideStatus?: string) => {
-    if (!overrideStatus || overrideStatus === 'inherited') return null;
-    
-    return (
-        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-            overrideStatus === 'granted' 
-                ? 'bg-primary/10 text-primary border border-primary/20' 
-                : 'bg-destructive/10 text-destructive border border-destructive/20'
-        }`}>
-            {overrideStatus === 'granted' ? 'Explicitly Granted' : 'Explicitly Denied'}
-        </span>
-    );
-};
-
-// Helper function to get card style based on override status
-const getCardStyle = (overrideStatus?: string) => {
-    if (!overrideStatus || overrideStatus === 'inherited') return "";
-    
-    return overrideStatus === 'granted' 
-        ? "border-primary/20 bg-primary/5" 
-        : "border-destructive/20 bg-destructive/5";
-};
-
 // Main accordion component - memoized to prevent unnecessary rerenders
 const PermissionAccordion: React.FC<PermissionAccordionProps> = memo(({
     groupedPermissions,
@@ -122,27 +27,66 @@ const PermissionAccordion: React.FC<PermissionAccordionProps> = memo(({
     gridCols = "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
     disabled = false
 }) => {
-    // Store the currently open accordion sections
-    const [openSections, setOpenSections] = useState<string[]>([]);
+    // Use the zustand store for initial open sections, but maintain local state after
+    const { openAccordionSections: storeOpenSections, setOpenAccordionSections } = usePermissionSelectionStore();
+    
+    // Local state to maintain accordion open/closed state during rerenders
+    const [localOpenSections, setLocalOpenSections] = useState<string[]>(storeOpenSections);
     
     // Initialize with ONLY the first category open for better UX
     useEffect(() => {
         const categories = Object.keys(groupedPermissions);
-        if (categories.length > 0 && openSections.length === 0) {
+        if (categories.length > 0 && localOpenSections.length === 0) {
             // Only open the first category by default
-            setOpenSections([categories[0]]);
+            const initialOpenSections = [categories[0]];
+            setLocalOpenSections(initialOpenSections);
+            setOpenAccordionSections(initialOpenSections);
         }
-    }, [groupedPermissions]);
+    // Only run this effect when groupedPermissions or initial state changes, not on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [groupedPermissions, setOpenAccordionSections]);
 
-    // Custom handler for accordion value change to maintain state
+    // Custom handler for accordion value change to maintain local state
     const handleValueChange = useCallback((newValues: string[]) => {
-        setOpenSections(newValues);
-    }, []);
+        setLocalOpenSections(newValues);
+        setOpenAccordionSections(newValues);
+    }, [setOpenAccordionSections]);
+
+    // Memoize permission cards to prevent unnecessary rerenders
+    const renderPermissionCards = useCallback((category: string, permissions: Permission[]) => {
+        return (
+            <div 
+                id={`permission-section-${category}`} 
+                className={`grid ${gridCols} gap-4 py-4`}
+            >
+                {permissions.map((permission) => {
+                    // Only check for changes if compareWith is provided
+                    const originalState = compareWith?.permissions?.find(p => p.id === permission.id);
+                    const hasChanged = compareWith ? permission.is_active !== originalState?.is_active : false;
+                    
+                    // Get the visual styling based on override status
+                    const overrideStatus = (permission as any).override_status;
+
+                    return (
+                        <PermissionCard
+                            key={permission.id}
+                            permission={permission}
+                            hasChanged={hasChanged}
+                            overrideStatus={overrideStatus}
+                            handlePermissionChange={handlePermissionChange}
+                            disabled={disabled}
+                            isSaving={isSaving}
+                        />
+                    );
+                })}
+            </div>
+        );
+    }, [compareWith, disabled, gridCols, handlePermissionChange, isSaving]);
 
     return (
         <Accordion 
             type="multiple" 
-            value={openSections}
+            value={localOpenSections}
             onValueChange={handleValueChange}
             className="w-full"
         >
@@ -164,31 +108,7 @@ const PermissionAccordion: React.FC<PermissionAccordionProps> = memo(({
                         </div>
                     </AccordionTrigger>
                     <AccordionContent>
-                        <div 
-                            id={`permission-section-${category}`} 
-                            className={`grid ${gridCols} gap-4 py-4`}
-                        >
-                            {permissions.map((permission) => {
-                                // Only check for changes if compareWith is provided
-                                const originalState = compareWith?.permissions?.find(p => p.id === permission.id);
-                                const hasChanged = compareWith ? permission.is_active !== originalState?.is_active : false;
-                                
-                                // Get the visual styling based on override status
-                                const overrideStatus = (permission as any).override_status;
-
-                                return (
-                                    <PermissionCard
-                                        key={permission.id}
-                                        permission={permission}
-                                        hasChanged={hasChanged}
-                                        overrideStatus={overrideStatus}
-                                        handlePermissionChange={handlePermissionChange}
-                                        disabled={disabled}
-                                        isSaving={isSaving}
-                                    />
-                                );
-                            })}
-                        </div>
+                        {renderPermissionCards(category, permissions)}
                     </AccordionContent>
                 </AccordionItem>
             ))}
