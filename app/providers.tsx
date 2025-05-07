@@ -31,6 +31,21 @@ export function Providers({ children, csrfToken = "", initialSession = null }: P
     },
   }));
   
+  // Expose queryClient to window for global access
+  useEffect(() => {
+    // Add type declaration to window
+    if (typeof window !== 'undefined') {
+      (window as any).queryClient = queryClient;
+    }
+    
+    return () => {
+      // Clean up on unmount
+      if (typeof window !== 'undefined') {
+        delete (window as any).queryClient;
+      }
+    };
+  }, [queryClient]);
+  
   // Manage CSRF token client-side
   const [token, setToken] = useState(csrfToken);
   

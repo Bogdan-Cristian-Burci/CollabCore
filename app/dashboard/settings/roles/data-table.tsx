@@ -1,5 +1,5 @@
 "use client";
-import React from "react"
+import React, { useEffect } from "react"
 import {
     ColumnDef,
     ColumnFiltersState,
@@ -77,6 +77,27 @@ export function DataTable<TData, TValue>({
             <ChevronRight className="h-4 w-4" />
         );
     };
+    
+    // Listen for expand row events
+    useEffect(() => {
+        const handleExpandRow = (e: Event) => {
+            const customEvent = e as CustomEvent;
+            const rowId = customEvent.detail?.rowId;
+            
+            if (rowId) {
+                setExpanded((prev) => ({
+                    ...prev,
+                    [rowId]: !prev[rowId],
+                }));
+            }
+        };
+        
+        document.addEventListener('expandRow', handleExpandRow);
+        
+        return () => {
+            document.removeEventListener('expandRow', handleExpandRow);
+        };
+    }, []);
 
     return (
         <div className="w-full flex flex-col">
@@ -114,16 +135,17 @@ export function DataTable<TData, TValue>({
                             <React.Fragment key={row.id}>
                                 <TableRow
                                     className={expanded[row.id as string] ? "bg-[var(--table-row-background)]" : ""}
-                                    onClick={() => {
-                                        setExpanded((prev) => ({
-                                            ...prev,
-                                            [row.id as string]: !prev[row.id as string],
-                                        }));
-                                    }}
-                                    style={{ cursor: 'pointer' }}
                                     data-state={row.getIsSelected() && "selected"}
                                 >
-                                    <TableCell className="w-10">
+                                    <TableCell 
+                                        className="w-10 cursor-pointer"
+                                        onClick={() => {
+                                            setExpanded((prev) => ({
+                                                ...prev,
+                                                [row.id as string]: !prev[row.id as string],
+                                            }));
+                                        }}
+                                    >
                                         {renderExpandIcon(!!expanded[row.id as string])}
                                     </TableCell>
                                     {row.getVisibleCells().map((cell) => (

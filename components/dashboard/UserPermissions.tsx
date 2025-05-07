@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import PermissionAccordion from "./PermissionAccordion";
 import { Permission } from "@/types/permission";
 import { useUserPermissions } from "@/lib/hooks/useUsers";
@@ -13,6 +13,25 @@ const UserPermissions: React.FC<UserPermissionsProps> = ({ userId }) => {
   const [isSaving, setIsSaving] = useState(false);
   // Use React Query hook to fetch user with permissions
   const { data: user, isLoading, error, refetch } = useUserPermissions(userId);
+  
+  // Listen for refresh events
+  useEffect(() => {
+    const handleRefreshPermissions = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const eventUserId = customEvent.detail?.userId;
+      
+      if (eventUserId && eventUserId.toString() === userId.toString()) {
+        console.log('Refreshing permissions for user:', userId);
+        refetch();
+      }
+    };
+    
+    document.addEventListener('refreshUserPermissions', handleRefreshPermissions);
+    
+    return () => {
+      document.removeEventListener('refreshUserPermissions', handleRefreshPermissions);
+    };
+  }, [userId, refetch]);
   
   // Group permissions by category with memoization to avoid unnecessary recalculations
   const groupedPermissions = useMemo(() => {

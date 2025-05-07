@@ -341,6 +341,34 @@ export async function getUserPermissionOverrides(userId: string): Promise<any[]>
     }
 }
 
+// Update user role in organization
+export async function updateUserRoleInOrganization(
+    organizationId: number | string,
+    userId: number | string,
+    roleName: string
+): Promise<boolean> {
+    try {
+        const response = await fetch(`/api/organisations/${organizationId}/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ role: roleName })
+        });
+
+        if (!response.ok) {
+            console.error(`Failed to update role for user ${userId} in organization ${organizationId}, status:`, response.status);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error(`Error updating role for user ${userId} in organization ${organizationId}:`, error);
+        return false;
+    }
+}
+
 // Get user with permissions
 export async function getUserWithPermissions(userId: string): Promise<UserResource | null> {
     try {
