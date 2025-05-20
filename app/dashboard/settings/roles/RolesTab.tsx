@@ -7,8 +7,7 @@ import {RoleSimpleCard} from "@/components/dashboard/RoleSimpleCard";
 import {RoleDetailedCard} from "@/components/dashboard/RoleDetailedCard";
 import {Role} from "@/types/role";
 import {RoleDetailedListCard} from "@/components/dashboard/RoleDetailedListCard";
-import {PlusIcon} from "lucide-react";
-import {AnimatedButton} from "@/components/dashboard/AnimatedButton";
+
 
 export default function RolesTab(){
 

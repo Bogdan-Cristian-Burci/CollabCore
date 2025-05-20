@@ -22,4 +22,15 @@ export interface ApiMeta{
     total:number;
 }
 
+export interface PaginatedResponse<T> {
+    data: T[];
+    links: PaginationResource;
+    meta: ApiMeta;
+}
+
+export interface PaginationParams {
+    page?: number;
+    per_page?: number;
+}
+
 

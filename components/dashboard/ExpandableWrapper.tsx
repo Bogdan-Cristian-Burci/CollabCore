@@ -8,11 +8,27 @@ import CheckBoxAsButton from "@/components/CheckBoxAsButton";
 import { CircleX } from 'lucide-react';
 
 
+// Type for filter value mapping
+type FilterValueMapping = {
+    value: string;
+    displayText: string;
+};
+
 // Generic type for the list items
 type WrapperProps<T extends Record<string, any>> = {
     list: T[];
     searchBy: keyof T;
+    searchByText: string;
     filterBy: keyof T;
+    filterByText: string;
+    // Optional mapping for filter values to display text
+    filterValueMapping?: FilterValueMapping[];
+    // Toggle wrapper text customization
+    toggleTexts?: {
+        showLess?: string;
+        showMore?: string;
+        showDetails?: string;
+    };
     SimpleComponent: React.ComponentType<{ item: T }>;
     DetailedComponent: React.ComponentType<{ item: T }>;
     ListDetailedComponent: React.ComponentType<{ item: T }>;
@@ -22,6 +38,8 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                                                            list,
                                                            searchBy,
                                                            filterBy,
+                                                           filterValueMapping,
+                                                           toggleTexts,
                                                            SimpleComponent,
                                                            DetailedComponent,
                                                            ListDetailedComponent,
@@ -117,7 +135,6 @@ export function ExpandableWrapper<T extends Record<string, any>>({
     const handleCloseDetails = (e: React.MouseEvent) => {
         // Stop event propagation to prevent other handlers from capturing this
         e.stopPropagation();
-        console.log("Close button clicked - switching back to grid view");
         
         setExpanded(false);
     };
@@ -356,9 +373,21 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                 {/* FilterBy component */}
                 <div className="flex items-center gap-2">
                     {filterValues.map((value) => {
+                        // Get display text from mapping or use fallbacks
+                        const displayText = filterValueMapping 
+                            ? filterValueMapping.find(mapping => mapping.value === value)?.displayText 
+                            : value === "false" ? "Custom" : "System";
+                            
                         return (
-                        <CheckBoxAsButton checked={activeFilters.includes(value)} checkedChange={() => handleFilterChange(value)} text={ value==="false" ? "Custom":"System"} value={value} key={value}/>
-                    )})}
+                            <CheckBoxAsButton 
+                                checked={activeFilters.includes(value)} 
+                                checkedChange={() => handleFilterChange(value)} 
+                                text={displayText || value} 
+                                value={value} 
+                                key={value}
+                            />
+                        );
+                    })}
                 </div>
             </div>
 
@@ -389,9 +418,9 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                                     isExpanded={expandedItems.includes(itemId)}
                                     onToggle={() => toggleItemExpansion(itemId)}
                                     onViewDetails={() => handleViewDetails(item)}
-                                    showLessText="Show less"
-                                    showMoreText="Show more"
-                                    showDetailsText="See permissions"
+                                    showLessText={toggleTexts?.showLess || "Show less"}
+                                    showMoreText={toggleTexts?.showMore || "Show more"}
+                                    showDetailsText={toggleTexts?.showDetails || "See details"}
                                 >
                                     {expandedItems.includes(itemId) ? (
                                         <DetailedComponent item={item} />
