@@ -44,6 +44,8 @@ export default function ProjectsPage(){
                             list={projects.data || []}
                             searchBy="name"
                             filterBy="organisation_id"
+                            showFilter={false}
+                            toggleTexts={{showMore: "Show more", showLess: "Show less",showDetails: "See tasks"}}
                             SimpleComponent={ProjectSimpleCard}
                             DetailedComponent={ProjectDetailedCard}
                             ListDetailedComponent={ProjectDetailedListCard}

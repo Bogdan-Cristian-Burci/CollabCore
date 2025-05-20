@@ -18,9 +18,7 @@ type FilterValueMapping = {
 type WrapperProps<T extends Record<string, any>> = {
     list: T[];
     searchBy: keyof T;
-    searchByText: string;
     filterBy: keyof T;
-    filterByText: string;
     // Optional mapping for filter values to display text
     filterValueMapping?: FilterValueMapping[];
     // Toggle wrapper text customization
@@ -29,6 +27,8 @@ type WrapperProps<T extends Record<string, any>> = {
         showMore?: string;
         showDetails?: string;
     };
+    // Whether to show the filter buttons
+    showFilter?: boolean;
     SimpleComponent: React.ComponentType<{ item: T }>;
     DetailedComponent: React.ComponentType<{ item: T }>;
     ListDetailedComponent: React.ComponentType<{ item: T }>;
@@ -40,6 +40,7 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                                                            filterBy,
                                                            filterValueMapping,
                                                            toggleTexts,
+                                                           showFilter = true,
                                                            SimpleComponent,
                                                            DetailedComponent,
                                                            ListDetailedComponent,
@@ -371,24 +372,26 @@ export function ExpandableWrapper<T extends Record<string, any>>({
                 </div>
 
                 {/* FilterBy component */}
-                <div className="flex items-center gap-2">
-                    {filterValues.map((value) => {
-                        // Get display text from mapping or use fallbacks
-                        const displayText = filterValueMapping 
-                            ? filterValueMapping.find(mapping => mapping.value === value)?.displayText 
-                            : value === "false" ? "Custom" : "System";
-                            
-                        return (
-                            <CheckBoxAsButton 
-                                checked={activeFilters.includes(value)} 
-                                checkedChange={() => handleFilterChange(value)} 
-                                text={displayText || value} 
-                                value={value} 
-                                key={value}
-                            />
-                        );
-                    })}
-                </div>
+                {showFilter && filterValues.length > 0 && (
+                    <div className="flex items-center gap-2">
+                        {filterValues.map((value) => {
+                            // Get display text from mapping or use fallbacks
+                            const displayText = filterValueMapping 
+                                ? filterValueMapping.find(mapping => mapping.value === value)?.displayText 
+                                : value === "false" ? "Custom" : "System";
+                                
+                            return (
+                                <CheckBoxAsButton 
+                                    checked={activeFilters.includes(value)} 
+                                    checkedChange={() => handleFilterChange(value)} 
+                                    text={displayText || value} 
+                                    value={value} 
+                                    key={value}
+                                />
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* ShowList component */}
