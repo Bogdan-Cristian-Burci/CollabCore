@@ -182,8 +182,6 @@ export default function AddNewRole({
                 level: values.level
             };
 
-            console.log("Creating role with data:", roleData);
-
             // Call the API to create the role
             await createRole(roleData);
 
@@ -449,7 +447,6 @@ export default function AddNewRole({
                     text={buttonText}
                     variant={buttonVariant}
                     size={buttonSize}
-                    expandOnHover
                     className={cn("rounded-full", className)}
                 />
             </DrawerTrigger>
