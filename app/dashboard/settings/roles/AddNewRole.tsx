@@ -171,14 +171,14 @@ export default function AddNewRole({
         try {
             setIsSaving(true);
 
-            // Extract selected permission names for the API
+            // Extract just the permission names for the API
             const permissionNames = selectedPermissions.map(p => p.name);
-
-            // Construct the payload for the API
+            
+            // Construct the payload for the API using string array format
             const roleData = {
                 name: values.name,
                 description: values.description || "",
-                permissions: permissionNames,
+                permissions: permissionNames, // Send names as strings in an array
                 level: values.level
             };
 

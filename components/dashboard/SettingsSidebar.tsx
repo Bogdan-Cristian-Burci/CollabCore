@@ -14,34 +14,53 @@ import { useState, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 
+// Define the interface for settings submenu items
+interface SettingsItem {
+    title: string;
+    link: string;
+}
+
+// Settings menu items - easy to add new items here
+const settingsItems: SettingsItem[] = [
+    {
+        title: "Roles",
+        link: "/dashboard/settings/roles"
+    },
+    {
+        title:"Board Templates",
+        link: "/dashboard/settings/boards"
+    },
+    {
+        title: "Tags",
+        link: "/dashboard/settings/tags"
+    },
+    // Add new settings items here
+    // Example:
+    // {
+    //     title: "Templates",
+    //     link: "/dashboard/settings/templates"
+    // }
+];
+
 export default function SettingsSidebar() {
     const [open, setOpen] = useState<boolean>(false);
-    
-    // Refs for the elements we want to animate
-    const rolesRef = useRef<HTMLAnchorElement>(null);
-    const tagsRef = useRef<HTMLAnchorElement>(null);
     const menuItemsRef = useRef<HTMLUListElement>(null);
-    
+
     // GSAP animation for when the menu opens/closes
     useGSAP(() => {
-        // Only run animation if menu is open
         if (!open) return;
-        
-        // Create timeline for staggered animation
+
         const tl = gsap.timeline();
-        
-        // Get all menu item children
         const menuItems = menuItemsRef.current?.querySelectorAll('.sidebar-menu-sub-item') || [];
-        
-        // Animate each menu item
-        tl.fromTo(menuItems, 
-            { 
-                opacity: 0, 
+
+        tl.fromTo(menuItems,
+            {
+                opacity: 0,
                 y: 10,
                 x: -10
             },
-            { 
-                opacity: 1, 
+            {
+                opacity: 1,
                 y: 0,
                 x: 0,
                 duration: 0.3,
@@ -49,21 +68,20 @@ export default function SettingsSidebar() {
                 ease: "power2.out"
             }
         );
-        
-        // Clean up animation on unmount
+
         return () => {
             tl.kill();
         };
-    }, [open]); // Re-run when open state changes
-    
+    }, [open]);
+
     return (
         <SidebarGroup>
             <SidebarGroupLabel>Settings</SidebarGroupLabel>
             <SidebarMenu>
-                <Collapsible 
-                    asChild 
-                    open={open} 
-                    onOpenChange={setOpen} 
+                <Collapsible
+                    asChild
+                    open={open}
+                    onOpenChange={setOpen}
                     className="group/collapsible"
                 >
                     <SidebarMenuItem>
@@ -76,20 +94,15 @@ export default function SettingsSidebar() {
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                             <SidebarMenuSub ref={menuItemsRef}>
-                                <SidebarMenuSubItem className="sidebar-menu-sub-item">
-                                    <SidebarMenuSubButton asChild>
-                                        <Link href={"/dashboard/settings/roles"} ref={rolesRef}>
-                                            <span>Roles</span>
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                                <SidebarMenuSubItem className="sidebar-menu-sub-item">
-                                    <SidebarMenuSubButton asChild>
-                                        <Link href={"/dashboard/settings/tags"} ref={tagsRef}>
-                                            <span>Tags</span>
-                                        </Link>
-                                    </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
+                                {settingsItems.map((item) => (
+                                    <SidebarMenuSubItem key={item.title} className="sidebar-menu-sub-item">
+                                        <SidebarMenuSubButton asChild>
+                                            <Link href={item.link}>
+                                                <span>{item.title}</span>
+                                            </Link>
+                                        </SidebarMenuSubButton>
+                                    </SidebarMenuSubItem>
+                                ))}
                             </SidebarMenuSub>
                         </CollapsibleContent>
                     </SidebarMenuItem>
