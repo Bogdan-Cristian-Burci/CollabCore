@@ -1,6 +1,6 @@
-import { Project } from '@/types/project';
+import { Project, SingleProjectResource } from '@/types/project';
 import { PaginationParams, PaginatedResponse } from '@/types/api';
-import projectsApi, { fetchProjects } from '@/lib/api/projects';
+import projectsApi, { fetchProjects, fetchProjectById } from '@/lib/api/projects';
 import { createQueryKeys } from '@/lib/api-factory';
 import { createResourceHooks } from '@/lib/query-hooks';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
@@ -20,7 +20,7 @@ const projectHooks = createResourceHooks<Project>(
 );
 
 /**
- * Hook to fetch and manage all projects data with pagination
+ * Hook to fetch and manage all projects data with pagination and search
  */
 export function useProjects(initialPage: number = 1, initialPerPage: number = 10) {
   // State for pagination
@@ -28,6 +28,9 @@ export function useProjects(initialPage: number = 1, initialPerPage: number = 10
     page: initialPage,
     per_page: initialPerPage
   });
+  
+  // State for search
+  const [searchTerm, setSearchTerm] = useState<string>('');
   
   // Query with pagination parameters
   const { 
@@ -63,7 +66,7 @@ export function useProjects(initialPage: number = 1, initialPerPage: number = 10
   };
   
   // Extract projects data and pagination metadata
-  const projects = data || { 
+  const rawProjects = data || { 
     data: [], 
     meta: {
       current_page: 1,
@@ -83,11 +86,28 @@ export function useProjects(initialPage: number = 1, initialPerPage: number = 10
     }
   };
 
+  // Apply client-side filtering for search
+  const filteredData = searchTerm
+    ? rawProjects.data.filter(project =>
+        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.key.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : rawProjects.data;
+
+  // Create filtered projects object with updated data
+  const projects = {
+    ...rawProjects,
+    data: filteredData
+  };
+
   return {
     projects, // This now contains data, meta, and links properties
     pagination,
     setPage,
     setPerPage,
+    searchTerm,
+    setSearchTerm,
     isLoading,
     isFetching,
     error,
@@ -102,7 +122,7 @@ export function useProjects(initialPage: number = 1, initialPerPage: number = 10
 }
 
 /**
- * Hook to fetch and manage a single project by ID
+ * Hook to fetch and manage a single project by ID with full details
  */
 export function useProject(id: number) {
   const queryClient = useQueryClient();
@@ -113,7 +133,14 @@ export function useProject(id: number) {
     isFetching, 
     error, 
     refetch 
-  } = projectHooks.useGetById(id);
+  } = useQuery({
+    queryKey: projectKeys.detail(id),
+    queryFn: () => fetchProjectById(id),
+    retry: 3,
+    retryDelay: 1000,
+    refetchOnWindowFocus: false,
+    enabled: !!id && id > 0
+  });
   
   const { 
     mutate: updateProjectMutation, 

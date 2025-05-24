@@ -49,8 +49,7 @@ export async function fetchWithInterceptor(
                 console.log(`[DEBUG] Client-side request to internal API: ${apiUrl}`);
             } else {
                 // For cases where we might need to call external APIs directly
-                const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost";
-                apiUrl = `${API_URL}${url}`;
+                apiUrl = url; // Use the full URL as provided
                 console.log(`[DEBUG] Client-side request to external API: ${apiUrl}`);
             }
         }

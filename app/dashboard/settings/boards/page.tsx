@@ -68,7 +68,7 @@ export default function BoardTemplatesPage() {
   // Ensure allTemplates is always an array before filtering
   const userTemplates = Array.isArray(allTemplates) 
     ? allTemplates.filter(template => 
-        !systemTemplates?.some(sysTemplate => sysTemplate.id === template.id)
+        !systemTemplates?.some((sysTemplate: { id: any; }) => sysTemplate.id === template.id)
       ) 
     : [];
 
@@ -117,7 +117,7 @@ export default function BoardTemplatesPage() {
   const toggleTexts = {
     showLess: "Show less",
     showMore: "Show more",
-    showDetails: "View details"
+    showDetails: "Test board"
   };
 
   // Prepare templates data for ExpandableWrapper

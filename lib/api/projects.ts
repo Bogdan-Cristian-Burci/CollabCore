@@ -1,4 +1,4 @@
-import { Project } from '@/types/project';
+import { Project, SingleProjectResource } from '@/types/project';
 import { PaginatedResponse, PaginationParams } from '@/types/api';
 import { createApiModule } from '@/lib/api-factory';
 import { api } from '@/lib/fetch-interceptor';
@@ -21,8 +21,8 @@ export async function fetchProjects(params?: PaginationParams): Promise<Paginate
       url.searchParams.append('per_page', params.per_page.toString());
     }
     
-    // Use direct fetch which is proven to work correctly
-    const response = await fetch(url.toString());
+    // Use the authenticated fetch interceptor
+    const response = await api.get(url.toString());
     
     if (!response.ok) {
       throw new Error(`Failed to fetch projects: ${response.status} ${response.statusText}`);
@@ -111,8 +111,32 @@ export async function fetchProjects(params?: PaginationParams): Promise<Paginate
   }
 }
 
-// Get a single project by ID
-export const fetchProjectById = projectsApi.getById;
+// Get a single project by ID with full details
+export async function fetchProjectById(id: number): Promise<SingleProjectResource> {
+  try {
+    const response = await api.get(`/api/projects/${id}`);
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch project: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    // Based on API documentation, single resource endpoints return data wrapped in a property
+    // Try different possible property names: project, data, or the raw response
+    const project = data.project || data.data || data;
+    
+    if (!project || !project.id) {
+      console.error('Invalid project data received:', project);
+      throw new Error('Invalid project data received from API');
+    }
+    
+    return project;
+  } catch (error) {
+    console.error('Error fetching project by ID:', error);
+    throw error;
+  }
+}
 
 // Create a new project
 export const createProject = projectsApi.create;
