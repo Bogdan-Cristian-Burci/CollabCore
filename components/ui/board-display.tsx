@@ -66,8 +66,8 @@ export default function BoardDisplay({
 
   return (
     <div className={cn("h-full flex flex-col", className)}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-4 w-full gap-2">
+        <div className="flex items-center gap-2 w-full">
           {additionalActions}
         </div>
         

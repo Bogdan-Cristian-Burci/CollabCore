@@ -1,16 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Project } from "@/types/project";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
-import { FolderOpen, User, Calendar } from "lucide-react";
+import { FolderOpen, User, Calendar, Trash2 } from "lucide-react";
 
 interface ProjectListItemProps {
     className?: string;
     item: Project;
+    onDelete?: (project: Project) => void;
 }
 
-export default function ProjectListItem({ className, item }: ProjectListItemProps) {
+export default function ProjectListItem({ className, item, onDelete }: ProjectListItemProps) {
     const router = useRouter();
 
     const handleSeeProject = () => {
@@ -44,26 +45,46 @@ export default function ProjectListItem({ className, item }: ProjectListItemProp
                 
                 <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                    <span>{item.created_at || 'No date'}</span>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <Avatar className="h-6 w-6">
-                        <span className="text-xs">{item.responsible_user.initials}</span>
+                        <AvatarFallback className="text-xs font-medium">
+                            {item.responsible_user.initials}
+                        </AvatarFallback>
                     </Avatar>
                     <span className="text-sm min-w-0 truncate max-w-24">
                         {item.responsible_user.name}
                     </span>
                 </div>
 
-                <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={handleSeeProject}
-                    className="flex-shrink-0"
-                >
-                    See Project
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleSeeProject}
+                        className="flex-shrink-0"
+                    >
+                        See Project
+                    </Button>
+                    
+                    {onDelete && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onDelete(item);
+                            }}
+                            title="Delete project"
+                        >
+                            <Trash2 className="h-4 w-4" />
+                            <span className="sr-only">Delete project</span>
+                        </Button>
+                    )}
+                </div>
             </div>
         </div>
     );

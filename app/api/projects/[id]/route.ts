@@ -15,8 +15,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
             return NextResponse.json({ message: "Authentication required" }, { status: 401 });
         }
 
-        // Build the API URL
-        const apiUrlWithId = `${apiUrl}/api/projects/${id}`;
+        // Build the API URL with media inclusion
+        const apiUrlWithId = `${apiUrl}/api/projects/${id}?include_media=1`;
 
         const response = await fetch(apiUrlWithId, {
             method: "GET",
@@ -67,20 +67,40 @@ export async function GET(request: Request, { params }: { params: { id: string }
     }
 }
 
-// PUT - Update project
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
-    const { id } = await params;
-    return proxyRequest(request, `/api/projects/${id}`, {
-        successMessage: "Project updated successfully",
-        successStatus: 200
-    });
+// PATCH - Update project (partial update)
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+    try {
+        const { id } = await params;
+        console.log(`[PATCH] Updating project with ID: ${id}`);
+        
+        return proxyRequest(request, `/api/projects/${id}`, {
+            successMessage: "Project updated successfully",
+            successStatus: 200
+        });
+    } catch (error) {
+        console.error('[PATCH] Error updating project:', error);
+        return NextResponse.json({ 
+            message: "Failed to update project",
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
+    }
 }
 
 // DELETE - Delete project
 export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-    const { id } = await params;
-    return proxyRequest(request, `/api/projects/${id}`, {
-        successMessage: "Project deleted successfully",
-        successStatus: 200
-    });
+    try {
+        const { id } = await params;
+        console.log(`[DELETE] Deleting project with ID: ${id}`);
+        
+        return proxyRequest(request, `/api/projects/${id}`, {
+            successMessage: "Project deleted successfully",
+            successStatus: 200
+        });
+    } catch (error) {
+        console.error('[DELETE] Error deleting project:', error);
+        return NextResponse.json({ 
+            message: "Failed to delete project",
+            details: error instanceof Error ? error.message : 'Unknown error'
+        }, { status: 500 });
+    }
 }

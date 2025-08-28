@@ -124,6 +124,8 @@ export async function proxyRequest(
     const { method = request.method as any } = options;
 
     try {
+        console.log(`[proxyRequest] ${method} ${endpoint}`);
+        
         // For GET requests, we need to preserve query parameters
         if (method === 'GET') {
             // The endpoint may already contain query parameters from our route handler
@@ -136,7 +138,13 @@ export async function proxyRequest(
         const contentType = request.headers.get('content-type');
 
         if (contentType?.includes('application/json')) {
-            body = await request.json().catch(() => undefined);
+            try {
+                body = await request.json();
+                console.log(`[proxyRequest] Request body:`, body);
+            } catch (parseError) {
+                console.error(`[proxyRequest] Error parsing request body:`, parseError);
+                body = undefined;
+            }
         }
 
         return makeServerApiRequest(endpoint, {
@@ -145,9 +153,12 @@ export async function proxyRequest(
             body,
         });
     } catch (error) {
-        console.error(`Error proxying request to ${endpoint}:`, error);
+        console.error(`[proxyRequest] Error proxying request to ${endpoint}:`, error);
         return NextResponse.json(
-            { message: "Failed to process request" },
+            { 
+                message: "Failed to process request",
+                details: error instanceof Error ? error.message : 'Unknown error'
+            },
             { status: 500 }
         );
     }

@@ -1,0 +1,15 @@
+
+> collab-core@0.1.0 dev
+> next dev --turbopack
+
+ ⚠ Port 3000 is in use, using available port 3002 instead.
+   ▲ Next.js 15.3.0 (Turbopack)
+   - Local:        http://localhost:3002
+   - Network:      http://192.168.50.24:3002
+   - Environments: .env.local
+
+ ✓ Starting...
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 3.7s
+ ✓ Ready in 13s
+[?25h

@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useEffect } from "react";
 import useBoardTemplates from "@/lib/hooks/useBoardTemplates";
 import { Button } from "@/components/ui/button";
+import Loading from "@/components/ui/loading";
 import { Plus, Loader2 } from "lucide-react";
 import BoardTemplateSimpleCard from "@/components/dashboard/board-templates/BoardTemplateSimpleCard";
 import BoardTemplateDetailedCard from "@/components/dashboard/board-templates/BoardTemplateDetailedCard";
@@ -195,9 +196,7 @@ export default function BoardTemplatesPage() {
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center items-center h-60">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
+        <Loading message="Loading board templates..." className="h-60" />
       ) : (
         <div className="flex-1 h-full">
           <ExpandableWrapper<BoardTemplateResponse>
